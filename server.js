@@ -1,28 +1,24 @@
-const express = require('express');
-const errorHandler = require('./middlewares/errorHandler');
-const invalidAddress = require('./middlewares/invalidAddress');
-const cors = require('cors');
+const express = require("express");
+const errorHandler = require("./middlewares/errorHandler");
+const invalidAddress = require("./middlewares/invalidAddress");
+const cors = require("cors");
 require("dotenv").config();
-const {sequelize} = require('./models');
-const authRoute = require('./Routes/authRoute');
+const { sequelize } = require("./models");
+const authRoute = require("./Routes/authRoute");
 const app = express();
-
 
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 
+app.use("/auth", authRoute);
 
-app.use('/auth', authRoute)
-
-app.use(errorHandler)
+app.use(errorHandler);
 app.use(invalidAddress);
 
-app.listen(PORT,() => {
-    console.log("listening on http://localhost:"+PORT);
-    sequelize.sync({alter: true});
-})                  
-
-
+app.listen(PORT, () => {
+  console.log("listening on http://localhost:" + PORT);
+  //   sequelize.sync({ alter: true });
+});
