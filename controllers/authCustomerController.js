@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { customer: Customer } = require("../models");
+const { Customer } = require("../models");
 
 const genToken = (payload) =>
   jwt.sign(payload, env.JWT_SECRET_KEY, {
