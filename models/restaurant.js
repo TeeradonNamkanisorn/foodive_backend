@@ -1,10 +1,13 @@
 module.exports = (sequelize, DataTypes) => {
     const Restaurant = sequelize.define('Restaurant', {
-        name: DataTypes.STRING,
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
         status: {
           type: DataTypes.ENUM('open', 'close'),
           defaultValue: "close",
-          allowNull: false,
+        //   allowNull: false,
   
         },
         email: {
@@ -18,6 +21,12 @@ module.exports = (sequelize, DataTypes) => {
         },
         telephoneNumber: {
           type: DataTypes.STRING
+        },
+        latitude: {
+            type: DataTypes.DECIMAL
+        },
+        longitude: {
+            type: DataTypes.DECIMAL
         }
     })
 
