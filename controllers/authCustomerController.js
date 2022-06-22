@@ -26,8 +26,8 @@ exports.signup = async (req, res, next) => {
     const customer = await Customer.create({
       firstName,
       lastName,
-      email: email ? email : null,
-      gmail: gmail ? gmail : null,
+      email: gmail ? null : email,
+      gmail: email ? null : gmail,
       password: gmail ? null : hashedPassword,
     });
 

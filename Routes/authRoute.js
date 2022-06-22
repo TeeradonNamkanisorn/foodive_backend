@@ -12,6 +12,7 @@ authRoute.post("/register/restaurant", authController.registerRestaurant);
 
 // CUSTOMER
 authRoute.post("/register/customer", authCustomerController.signup);
+
 authRoute.post("/register/customer", authCustomerController.login);
 
 module.exports = authRoute;
