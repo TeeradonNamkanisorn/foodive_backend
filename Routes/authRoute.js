@@ -14,4 +14,8 @@ authRoute.post("/register/restaurant", authController.registerRestaurant);
 authRoute.post("/register/customer", authController.registerCustomer);
 authRoute.post("/login/customer", authController.loginCustomer);
 
+// DRIVER
+authRoute.post('/register/driver', authController.registerDriver);
+authRoute.post('/login/driver', authController.loginDriver);
+
 module.exports = authRoute;

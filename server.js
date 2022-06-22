@@ -20,5 +20,5 @@ app.use(invalidAddress);
 
 app.listen(PORT, () => {
   console.log("listening on http://localhost:" + PORT);
-  //   sequelize.sync({ alter: true });
+    sequelize.sync({ alter: true });
 });

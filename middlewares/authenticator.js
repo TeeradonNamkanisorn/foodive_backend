@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const createError = require("../services/createError");
 const { Restaurant, Customer, Driver } = require("../models");
 
-module.exports = async (req, res, next) => {
+module.exports = (role) => async (req, res, next) => {
   try {
     const { authorization } = req.headers;
     if (!authorization || !authorization.startsWith("Bearer")) {
@@ -15,6 +15,8 @@ module.exports = async (req, res, next) => {
     }
 
     const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    if (payload.role !== role) createError("invalid role", 401);
 
     let user;
     if (payload.role === "restaurant") {
