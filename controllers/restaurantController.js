@@ -1,6 +1,7 @@
 const {Menu} = require('../models');
 const clearFolder = require('../services/clearFolder');
 const createError = require('../services/createError');
+const { destroy } = require('../utils/cloudinary');
 
 
 exports.addMenu = async (req, res, next) => {
@@ -27,4 +28,38 @@ exports.addMenu = async (req, res, next) => {
    } finally {
     clearFolder('./public/images')
    }
+}
+
+exports.editMenu = async (req, res, next) => {
+    try {
+        const {name, price, description} = req.body;
+        const {menuId} = req.params;
+
+        const restaurant = req.user;
+        const menu = await Menu.findByPk(menuId);
+
+        if (!menu) createError("Menu not found", 400);
+
+        if (menu.restaurantId !== restaurant.id) createError("You are unauthorized", 403);
+
+        menu.name = name;
+        menu.price = price;
+        menu.description = description;
+
+        if (req.imageFile && menu.menuImagePublicId) {
+            const deleteRes = await destroy(menu.menuImagePublicId);
+            console.log(deleteRes);
+            menu.menuImagePublicId = req.imageFile.public_id;
+            menu.menuImage = req.imageFile.secure_url;
+        }
+
+        await menu.save();
+
+        res.json({menu});
+        
+    } catch (err) {
+        next(err)
+    } finally {
+        clearFolder('./public/images')
+       }
 }
