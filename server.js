@@ -4,7 +4,8 @@ const invalidAddress = require("./middlewares/invalidAddress");
 const cors = require("cors");
 require("dotenv").config();
 const { sequelize } = require("./models");
-const authRoute = require("./Routes/authRoute");
+const authRoute = require("./routes/authRoute");
+const restaurantRoute = require('./routes/restaurantRoute');
 const app = express();
 
 const PORT = process.env.PORT || 5000;
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/auth", authRoute);
+app.use('/restaurant', restaurantRoute)
 
 app.use(errorHandler);
 app.use(invalidAddress);

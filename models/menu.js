@@ -3,6 +3,19 @@ module.exports = (sequelize, DataTypes) => {
         name: {
             type: DataTypes.STRING,
             allowNull: false
+        },
+        price: {
+            type: DataTypes.FLOAT,
+            defaultValue: 0,
+            allowNull: false
+        },
+        menuImage: {
+            type: DataTypes.STRING,
+            //allowNull: false,
+        },
+        // Used to delete cloudinary image when update or deleting
+        menuImagePublicId: {
+            type: DataTypes.STRING
         }
     })
     Menu.associate = (models) => {
@@ -11,7 +24,8 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "RESTRICT",
             onUpdate: "RESTRICT",
             foreignKey: {
-                name: "restaurantId"
+                name: "restaurantId",
+                allowNull: false
             }
         })
 
