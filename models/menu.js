@@ -18,8 +18,8 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING
         }
     })
-    Menu.associate = (models) => {
-        Menu.belongsTo(models.Restaurant, {
+    Menu.associate = ({Restaurant, Category, MenuCategory, MenuOption}) => {
+        Menu.belongsTo(Restaurant, {
             allowNull: false,
             onDelete: "RESTRICT",
             onUpdate: "RESTRICT",
@@ -30,11 +30,20 @@ module.exports = (sequelize, DataTypes) => {
         })
 
         // Menu { include: Category } NOT include : MenuCategory
-        Menu.belongsToMany(models.Category, {
-            through: models.MenuCategory,
+        Menu.belongsToMany(Category, {
+            through: MenuCategory,
             foreignKey: {
                 name: "menuId"
             }
+        })
+
+        Menu.hasMany(MenuOption, {
+            foreignKey: {
+                name: "menuId",
+                allowNull: false
+            },
+            onDelete: "RESTRICT",
+            onUpdate: "RESTRICT"
         })
     }
     return Menu
