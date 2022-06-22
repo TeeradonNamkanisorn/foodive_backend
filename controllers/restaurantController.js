@@ -1,4 +1,5 @@
 const {Menu} = require('../models');
+const clearFolder = require('../services/clearFolder');
 const createError = require('../services/createError');
 
 
@@ -23,5 +24,7 @@ exports.addMenu = async (req, res, next) => {
     res.sendStatus(204);
    } catch (err) {
     next(err)
-   } 
+   } finally {
+    clearFolder('./public/images')
+   }
 }
