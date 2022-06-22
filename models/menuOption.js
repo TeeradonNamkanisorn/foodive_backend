@@ -3,6 +3,10 @@ module.exports = (sequelize, DataTypes) => {
         name: {
             type: DataTypes.STRING,
             allowNull: false
+        },
+        price: {
+            type: DataTypes.FLOAT,
+            defaultValue: 0
         }
     })
    
@@ -10,9 +14,10 @@ module.exports = (sequelize, DataTypes) => {
         MenuOption.belongsTo(Menu, {
             foreignKey: {
                 name: "menuId",
-                onDelete: "RESTRICT",
-                onUpdate: "RESTRICT"
-            }
+                allowNull: false
+            },
+            onDelete: "RESTRICT",
+            onUpdate: "RESTRICT"
         })
     }
     return MenuOption
