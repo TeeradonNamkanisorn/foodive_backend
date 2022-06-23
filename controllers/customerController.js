@@ -89,7 +89,7 @@ exports.getMe = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   try {
     console.log("zero");
-    const { name, firstName, lastName } = req.body;
+    const { firstName, lastName } = req.body;
     console.log("first");
     const customer = req.user;
     console.log("two");
@@ -104,7 +104,7 @@ exports.updateProfile = async (req, res, next) => {
       createError("You cannot update empty data", 400);
     }
 
-    customer.name = name;
+  
     customer.firstName = firstName;
     customer.lastName = lastName;
 
@@ -113,6 +113,7 @@ exports.updateProfile = async (req, res, next) => {
       const deleteRes = await destroy(customer.profileImage);
       console.log(deleteRes);
     }
+
     if (req.imageFile) {
         customer.profileImagePublicId = req.imageFile.public_id;
         customer.profileImage = req.imageFile.secure_url;
