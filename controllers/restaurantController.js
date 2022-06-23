@@ -64,43 +64,7 @@ exports.editMenu = async (req, res, next) => {
        }
 }
 
-// exports.addOptions = async (req, res, next) => {
-//     const t = await sequelize.transaction();
 
-//     try {
-//         //options is an array
-//         //[{name: "abc", price: 10}, {}, {}]
-//         const {options} = req.body;
-//         const {menuId} = req.params;
-        
-//         console.log(options);
-
-//         const optionItems = []
-//         for (let option of options) {
-//             if (isNaN(option.price)) createError("invalid request body");
-//             if (!option.name || option?.name?.trim() === "") createError("option name cannot be blank");
-//             optionItems.push({name: option.name, price: option.price, menuId})
-//         };
-        
-        
-        
-//         const menuOptions = await MenuOption.bulkCreate(optionItems, {transaction: t});
-//         const menu = await Menu.findOne({where: {
-//             id: menuId
-//         }, include: MenuOption,
-//         transaction: t})
-        
-//         if (!menu) createError("menu not found", 400);
-
-        
-//         await t.commit();
-//         res.json({menu})
-
-//     } catch (err) {
-//         await t.rollback()
-//         next(err)
-//     }
-// }
 
 exports.addOptions = async (req, res, next) => {
     const t = await sequelize.transaction()
@@ -110,8 +74,6 @@ exports.addOptions = async (req, res, next) => {
         //   }]}
 
         const {menuId} = req.params;
-        console.log("------------------------------------------",menuId);
-
         const {menuOptionGroups} = req.body;
 
         for (let optionGroup of menuOptionGroups) {
@@ -147,49 +109,63 @@ exports.addOptions = async (req, res, next) => {
     }
 }
 
-// exports.modifyOptions = async (req, res, next) => {
-//     const t = await sequelize.transaction();
-//     try {
-//         const {options} = req.body;
-//         const {menuId} = req.params;
+exports.modifyOptions = async (req, res, next) => {
+    const t = await sequelize.transaction();
+    try {
+        const {optionGroups} = req.body;
 
-//         //Slightly inefficient but errors can be detected better this way.
-//         let menuOptions = await MenuOption.findAll({where: {
-//             menuId
-//         }})
+        //Theses are used to validate, will do this later
+        const {menuId} = req.params;
+        // let menuOptions = await MenuOption.findAll({where: {
+        //     menuId
+        // }})
 
-//         menuOptions = JSON.parse(JSON.stringify(menuOptions));
-//         const menuOptionIds = menuOptions.map(e => e.id);
+        // menuOptions = JSON.parse(JSON.stringify(menuOptions));
+        // const menuOptionIds = menuOptions.map(e => e.id);
 
-       
 
-//         for (let option of options) {
-//             const price = option.price;
-//             const name = option.name;
-//             const id = option.id;
+        for (let optionGroup of optionGroups) {
+            const name = optionGroup.name;
+            const numberLimit = optionGroup.numberLimit
+            const id = optionGroup.id;
 
+            await MenuOptionGroup.update({name, numberLimit}, {where: {
+                id
+            }, transaction : t})
+
+            // if (!menuOptionIds.includes(id)) createError("invalid menu option item", 400);
             
-//             if (!menuOptionIds.includes(id)) createError("invalid menu option item", 400);
-//             if (isNaN(option.price)) createError("invalid request body");
-//             if (!option.name || option?.name?.trim() === "") createError("option name cannot be blank");
+            for (let option of optionGroup.menuOptions) {
+                const optionName = option.name;
+                const optionPrice = option.price;
+                const optionId = option.id
 
-//             await MenuOption.update({price, name},{where: {
-//                 id
-//             }, transaction : t})
+                if (isNaN(optionPrice) && optionPrice !== undefined) createError("invalid request body");
+                if (!optionName || optionName.trim() === "") createError("option name cannot be blank");
 
-//         }
+                await MenuOption.update({name: optionName, price:optionPrice}, {
+                    where: {
+                        id: optionId
+                    },
+                    transaction : t})
+            }
 
-//         const menu = await Menu.findOne({where: {
-//             id: menuId
-//         }, 
-//             include: MenuOption,
-//         transaction : t})
+        }
 
-//         await t.commit();
-//         res.json({menu});
+        const menu = await Menu.findOne({where: {
+            id: menuId
+        }, 
+            include: {
+                model: MenuOptionGroup,
+                include: MenuOption
+            },
+        transaction : t})
 
-//     } catch (error) {
-//         await t.rollback()
-//         next(error)
-//     }
-// }
+        await t.commit();
+        res.json({menu});
+
+    } catch (error) {
+        await t.rollback()
+        next(error)
+    }
+}

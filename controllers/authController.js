@@ -5,8 +5,6 @@ const createError = require('../services/createError');
 require('dotenv').config();
 
 const { Op } = require('sequelize')
-
-console.log(process.env.JWT_EXPIRES_IN)
 const genToken = (payload) =>
   jwt.sign(payload, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRES_IN,
