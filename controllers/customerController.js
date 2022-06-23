@@ -138,6 +138,50 @@ exports.removeMenu = async (req, res, next) => {
   }
 };
 
+//ต้อง Fetch ใหม่
+exports.modifyMenu = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { cartId, orderMenuId } = req.params;
+    const { orderMenuOptions, comment } = req.body;
+    await OrderMenu.update(
+      { comment },
+      {
+        where: {
+          id: orderMenuId,
+        },
+        transaction: t,
+      },
+    );
+    await OrderMenuOption.destroy(
+      { where: { orderMenuId } },
+      { transaction: t },
+    );
+
+    const newOptions = orderMenuOptions.map((e) => ({
+      orderMenuId: orderMenuId,
+      menuOptionId: e.id,
+    }));
+    await OrderMenuOption.bulkCreate(newOptions, { transaction: t });
+
+    const orderMenu = await OrderMenu.findOne({
+      where: {
+        id: orderMenuId,
+      },
+      include: OrderMenuOption,
+      transaction: t,
+    });
+
+    // await t.commit();
+    await t.rollback();
+
+    res.json({ orderMenu });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+
 //   get 1 customer who login
 exports.getMe = async (req, res, next) => {
   try {

@@ -15,6 +15,11 @@ router.delete(
   customerController.removeMenu,
 );
 
+router.patch(
+  '/cart/:cartId/modify-menu/:orderMenuId',
+  customerController.modifyMenu,
+);
+
 router.post(
   '/update',
   multer.single('profileImage'),
