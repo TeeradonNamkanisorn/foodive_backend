@@ -1,4 +1,8 @@
 node_modules
 .env
 migrations
+<<<<<<< HEAD
+=======
 config.json
+>>>>>>> bf52e7262c6ffef75df76f60b1698ba9b20d5426
+config

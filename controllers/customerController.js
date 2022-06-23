@@ -1,86 +1,203 @@
+const { menuList } = require('../services/getPrices');
+const {
+  Order,
+  OrderMenu,
+  sequelize,
+  OrderMenuOption,
+  Customer,
+  Menu,
+  Restaurant,
+  Category,
+} = require('../models');
+const {
+  calculatePriceFromMenuList,
+  getCartMenuArrayWithoutOptions,
+} = require('../services/cartServices');
+const createError = require('../services/createError');
+const { destroy } = require('../utils/cloudinary');
+const { Op } = require('sequelize');
 
-const { menuList } = require("../services/getPrices");
-const { Order, OrderMenu, sequelize, OrderMenuOption } = require('../models');
-const { calculatePriceFromMenuList, getCartMenuArrayWithoutOptions} = require("../services/cartServices");
-const createError = require("../services/createError");
-const { destroy } = require("../utils/cloudinary");
+module.exports.createCart = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { menus, restaurantId } = req.body;
 
+    const order = await Order.create(
+      {
+        customerId: req.user.id,
+        //driverId later when the restaurant confirms the order
+        restaurantId,
+      },
+      {
+        transaction: t,
+      },
+    );
 
+    for (let menu of menus) {
+      const menuId = menu.id;
+      const menuComment = menu.comment;
+      const orderMenu = await OrderMenu.create(
+        { menuId, comment: menuComment, orderId: order.id },
+        { transaction: t },
+      );
 
-// module.exports.createCart = async (req, res, next) => {
-//     const t = await sequelize.transaction();
-//     try {
-//         const {menus, restaurantId} = req.body;
-//         // menus = [
-//         //    {id: 123, price: 10, comment: "no sauces", menuOptions: [
-//         //     {id: 111, price: 1, name: "extra-large"}
-//         //    ]}
-//         // ]
+      for (let optionGroup of menu.optionGroups) {
+        for (let option of optionGroup.options) {
+          await OrderMenuOption.create(
+            {
+              orderMenuId: orderMenu.id,
+              menuOptionId: option.id,
+            },
+            { transaction: t },
+          );
+        }
+      }
+    }
 
-//         //IMPORTANT: NEEDS TO UPDATE PRICE EVERY TIME THE ORDER IS CHANGED. SIMPLY CALL CALCULATE PRICE FUNCTION; DO NOT SUBTRACT MANUALLY.
-//         const price = await calculatePriceFromMenuList(menus, restaurantId);
-    
+    const cart = await Order.findOne({
+      where: {
+        id: order.id,
+      },
+      include: {
+        model: OrderMenu,
+        include: {
+          model: OrderMenuOption,
+        },
+      },
+      transaction: t,
+    });
 
-//         const order = await Order.create({
-//             customerId: req.user.id,
-//             //driverId later when the restaurant confirms the order
-//             restaurantId,
-//             price
-//         }, {
-//             transaction : t
-//         });
+    await t.commit();
+    res.json({ cart });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
 
+exports.appendMenu = async (req, res, next) => {
+  const t = await sequelize.transaction();
 
-//         for (let menu of menus) {
+  try {
+    const { menu } = req.body;
+    const { cartId: orderId } = req.params;
 
-//             const order_menu = await OrderMenu.create({
-//                 name: menu.name,
-//                 price: menu.price,
-//                 comment: menu.comment,
-//                 orderId: order.id
-//             }, {
-//                 transaction : t
-//             })
+    const orderMenu = await OrderMenu.create({
+      orderId,
+      comment: menu.comment,
+      menuId: menu.id,
+    });
 
-//             for (let option of menu.menuOptions) {
-//                 await OrderMenuOption.create({
-//                     name: option.name,
-//                     price: option.price,
-//                     orderMenuId:  order_menu.id
-//                 }, {
-//                     transaction: t
-//                 })
-//             }
-//         }
-    
-//         const cart = await Order.findOne({where: {
-//             id: Order.id
-//         },
-//             include: {
-//                 model: OrderMenu,
-//                 include: {
-//                     model: OrderMenuOption
-//                 },
-//                 transaction: t
-//             }
-//         })
-    
-//        await t.commit();
-   
-//        res.json({cart})
-//     } catch (err) {
-//         await t.rollback();
-//         next(err)
-//     }
-    
-// }
+    for (let optionGroup of menu.optionGroups) {
+      for (let option of optionGroup.options) {
+        console.log(orderMenu.id, option.id);
+        await OrderMenuOption.create(
+          {
+            orderMenuId: orderMenu.id,
+            menuOptionId: option.id,
+          },
+          { transaction: t },
+        );
+      }
+    }
 
+    await t.commit();
+
+    const cart = await Order.findByPk(orderId);
+
+    res.json({ message: 'successfully added menu to cart!' });
+  } catch (error) {
+    await t.rollback();
+    next(error);
+  }
+};
+
+exports.removeMenu = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { orderMenuId } = req.params;
+
+    const orderMenu = await OrderMenu.findByPk(orderMenuId, { transaction: t });
+
+    await OrderMenuOption.destroy({
+      where: {
+        orderMenuId,
+      },
+      transaction: t,
+    });
+
+    await OrderMenu.destroy({
+      where: {
+        id: orderMenuId,
+      },
+      transaction: t,
+    });
+
+    await t.commit();
+    res.sendStatus(204);
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+
+//ต้อง Fetch ใหม่
+exports.modifyMenu = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { cartId, orderMenuId } = req.params;
+    const { orderMenuOptions, comment } = req.body;
+    await OrderMenu.update(
+      { comment },
+      {
+        where: {
+          id: orderMenuId,
+        },
+        transaction: t,
+      },
+    );
+    await OrderMenuOption.destroy(
+      { where: { orderMenuId } },
+      { transaction: t },
+    );
+
+    const newOptions = orderMenuOptions.map((e) => ({
+      orderMenuId: orderMenuId,
+      menuOptionId: e.id,
+    }));
+    await OrderMenuOption.bulkCreate(newOptions, { transaction: t });
+
+    const orderMenu = await OrderMenu.findOne({
+      where: {
+        id: orderMenuId,
+      },
+      include: OrderMenuOption,
+      transaction: t,
+    });
+
+    // await t.commit();
+    await t.rollback();
+
+    res.json({ orderMenu });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+
+exports.fetchMenus = async (req, res, next) => {
+  try {
+  } catch (error) {
+    next(error);
+  }
+};
 
 //   get 1 customer who login
 exports.getMe = async (req, res, next) => {
   try {
     const user = JSON.parse(JSON.stringify(req.user));
-    res.json({ user });
+    const customer = await Customer.findByPk(user.id);
+    res.json({ customer });
   } catch (err) {
     next(err);
   }
@@ -88,40 +205,40 @@ exports.getMe = async (req, res, next) => {
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    console.log("zero");
     const { firstName, lastName } = req.body;
-    console.log("first");
     const customer = req.user;
-    console.log("two");
-    console.log(customer);
 
     if (!customer) {
-      createError("You are unauthorized", 400);
+      createError('You are unauthorized', 400);
     }
 
     // check if not have any data to update
     if (Object.keys(req.body).length === 0 && !req.imageFile) {
-      createError("You cannot update empty data", 400);
+      createError('You cannot update empty data', 400);
     }
 
-  
-    customer.firstName = firstName;
-    customer.lastName = lastName;
+    if (firstName) {
+      customer.firstName = firstName;
+    }
+
+    if (lastName) {
+      customer.lastName = lastName;
+    }
 
     // if have customer profile image, then destroy image before update new image
     if (req.imageFile && customer.profileImage) {
-      const deleteRes = await destroy(customer.profileImage);
+      const deleteRes = await destroy(customer.profileImagePublicId);
       console.log(deleteRes);
     }
 
     if (req.imageFile) {
-        customer.profileImagePublicId = req.imageFile.public_id;
-        customer.profileImage = req.imageFile.secure_url;
+      customer.profileImagePublicId = req.imageFile.public_id;
+      customer.profileImage = req.imageFile.secure_url;
     }
 
     await customer.save();
 
-    res.json({ message: "Update profile success" });
+    res.json({ message: 'Update profile success' });
   } catch (err) {
     next(err);
   }
