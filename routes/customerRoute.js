@@ -27,4 +27,5 @@ router.post(
   customerController.updateProfile,
 );
 
+router.get('/search/:menuName', customerController.searchByMenu);
 module.exports = router;

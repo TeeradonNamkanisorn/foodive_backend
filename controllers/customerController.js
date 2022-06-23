@@ -243,3 +243,24 @@ exports.updateProfile = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.searchByMenu = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { menuName } = req.params;
+
+    const menu = await Menu.findAll({
+      where: {
+        name: menuName,
+      },
+      include: {
+        model: Restaurant,
+      },
+      transaction: t,
+    });
+
+    await t.commit();
+  } catch (err) {
+    next(err);
+  }
+};

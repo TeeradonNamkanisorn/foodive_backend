@@ -28,4 +28,5 @@ router.put(
 router.post('/assign-categories', restaurantController.assignCategories);
 router.put('/change-categories', restaurantController.changeCategories);
 router.get('/pickDriver', restaurantController.pickDriver);
+
 module.exports = router;
