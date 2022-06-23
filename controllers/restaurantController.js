@@ -1,4 +1,12 @@
-const { Menu, MenuOption, sequelize, MenuOptionGroup } = require('../models');
+const {
+  Menu,
+  MenuOption,
+  sequelize,
+  MenuOptionGroup,
+  MenuCategory,
+  Driver,
+} = require('../models');
+const getDistanceFromLatLonInKm = require('../services/calcDistance');
 const clearFolder = require('../services/clearFolder');
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
@@ -192,5 +200,101 @@ exports.modifyOptions = async (req, res, next) => {
   } catch (error) {
     await t.rollback();
     next(error);
+  }
+};
+
+exports.assignCategories = async (req, res, next) => {
+  try {
+    const { categoryIds, menuId } = req.body;
+    const { id: restaurantId } = req.user;
+
+    const arr = categoryIds.map((cat) => ({
+      categoryId: cat,
+      menuId,
+      restaurantId,
+    }));
+    console.log(arr);
+
+    await MenuCategory.bulkCreate(arr);
+
+    res.json({ message: 'Success!' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.changeCategories = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const restaurantId = req.user.id;
+    const { categoryIds, menuId } = req.body;
+    await MenuCategory.destroy({
+      where: {
+        menuId,
+      },
+      transaction: t,
+    });
+
+    const arr = categoryIds.map((cat) => ({
+      categoryId: cat,
+      menuId,
+      restaurantId,
+    }));
+
+    await MenuCategory.bulkCreate(arr, { transaction: t });
+
+    await t.commit();
+    res.json({ message: 'Updated Successfully!' });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+
+exports.pickDriver = async (req, res, next) => {
+  try {
+    const restaurant = req.user;
+    const { latitude, longitude } = restaurant;
+    let driverData = await Driver.findAll({
+      attributes: [
+        'id',
+        'latitude',
+        'longitude',
+        'firstName',
+        'lastName',
+        'phoneNumber',
+      ],
+    });
+
+    driverData = JSON.parse(JSON.stringify(driverData));
+    if (!driverData) createError('driver not found');
+    driverData.sort((a, b) => {
+      const distanceFromA = getDistanceFromLatLonInKm(
+        latitude,
+        longitude,
+        a.latitude,
+        a.longitude,
+      );
+      const distanceFromB = getDistanceFromLatLonInKm(
+        latitude,
+        longitude,
+        b.latitude,
+        b.longitude,
+      );
+      return distanceFromA - distanceFromB;
+    });
+
+    const chosenDriver = driverData[0];
+
+    chosenDriver.distance = getDistanceFromLatLonInKm(
+      latitude,
+      longitude,
+      chosenDriver.latitude,
+      chosenDriver.longitude,
+    );
+    //
+    res.json({ driver: chosenDriver });
+  } catch (err) {
+    next(err);
   }
 };

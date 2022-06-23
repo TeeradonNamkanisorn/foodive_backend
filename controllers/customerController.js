@@ -5,6 +5,9 @@ const {
   sequelize,
   OrderMenuOption,
   Customer,
+  Menu,
+  Restaurant,
+  Category,
 } = require('../models');
 const {
   calculatePriceFromMenuList,
@@ -179,6 +182,13 @@ exports.modifyMenu = async (req, res, next) => {
   } catch (err) {
     await t.rollback();
     next(err);
+  }
+};
+
+exports.fetchMenus = async (req, res, next) => {
+  try {
+  } catch (error) {
+    next(error);
   }
 };
 

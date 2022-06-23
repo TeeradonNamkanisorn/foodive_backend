@@ -33,6 +33,8 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM('AVAILABLE', 'UNAVAILABLE'),
         default: 'UNAVAILABLE',
       },
+      latitude: DataTypes.DECIMAL,
+      longitude: DataTypes.DECIMAL,
     },
     {
       indexes: [
