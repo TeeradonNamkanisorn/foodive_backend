@@ -7,18 +7,29 @@ module.exports = (sequelize, DataTypes) => {
         price: {
             type: DataTypes.FLOAT,
             defaultValue: 0
-        }
+        },
+
     })
    
-    MenuOption.associate = ({Menu}) => {
-        MenuOption.belongsTo(Menu, {
+    MenuOption.associate = ({MenuOptionGroup, OrderMenuOption, OrderMenu}) => {
+        MenuOption.belongsTo(MenuOptionGroup, {
             foreignKey: {
-                name: "menuId",
+                name: "menuOptionGroupId",
                 allowNull: false
             },
             onDelete: "RESTRICT",
             onUpdate: "RESTRICT"
         })
+
+        MenuOption.hasMany(OrderMenuOption, {
+            foreignKey: {
+                name: "menuOptionId",
+                allowNull: false
+            },
+            onDelete: "RESTRICT",
+            onUpdate: "RESTRICT"
+        })
+
     }
     return MenuOption
 }

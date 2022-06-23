@@ -5,7 +5,6 @@ const createError = require("../services/createError");
 
 const { Op } = require("sequelize");
 
-console.log(process.env.JWT_EXPIRES_IN);
 const genToken = (payload) =>
   jwt.sign(payload, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -131,11 +130,30 @@ exports.loginCustomer = async (req, res, next) => {
 
 exports.registerDriver = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, gmail, password, confirmPassword } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      gmail,
+      phoneNumber,
+      password,
+      confirmPassword,
+    } = req.body;
+
+    if (!firstName) {
+      createError("Please enter your first name.", 400);
+    }
+
+    if (!lastName) {
+      createError("Please enter your last name.", 400);
+    }
 
     if (!email && gmail) {
       createError("Please enter email or gmail", 400);
+    }
+
+    if (!phoneNumber) {
+      createError("Please enter phone number", 400);
     }
 
     if (!password) {
@@ -153,7 +171,9 @@ exports.registerDriver = async (req, res, next) => {
       lastName,
       email: email ? email : null,
       gmail: gmail ? gmail : null,
+      phoneNumber,
       password: gmail ? null : hashedPassword,
+      status: "UNAVAILABLE",
     });
 
     const token = genToken({ email, role: "driver" });
@@ -166,19 +186,19 @@ exports.registerDriver = async (req, res, next) => {
 
 exports.loginDriver = async (req, res, next) => {
   try {
-    const { email, password, gmail } = req.body;
+    const { email, password } = req.body;
 
-    const customer = await Customer.findOne({
+    const driver = await Driver.findOne({
       where: {
-        [Op.or]: [{ email: email || "" }, { gmail: email || "" }],
+        email,
       },
     });
 
-    if (!customer) {
+    if (!driver) {
       createError("You are unauthorize", 400);
     }
 
-    const isMatch = await bcrypt.compare(password, customer.password);
+    const isMatch = await bcrypt.compare(password, driver.password);
 
     if (!isMatch) {
       createError("You are unauthorize", 400);

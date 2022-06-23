@@ -2,11 +2,13 @@ const cloudinary = require("../utils/cloudinary");
 
 const uploadImage = async (req, res, next) => {
   try {
-    const imagePath = req.file.path;
+    if (req.file) {
+      const imagePath = req.file?.path;
 
-    const response = await cloudinary.upload(imagePath);
+      const response = await cloudinary.upload(imagePath);
 
-    req.imageFile = response;
+      req.imageFile = response;
+    }
 
     next();
   } catch (err) {
