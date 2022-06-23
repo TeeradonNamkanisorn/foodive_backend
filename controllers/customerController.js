@@ -1,11 +1,18 @@
 const { menuList } = require('../services/getPrices');
-const { Order, OrderMenu, sequelize, OrderMenuOption } = require('../models');
+const {
+  Order,
+  OrderMenu,
+  sequelize,
+  OrderMenuOption,
+  Customer,
+} = require('../models');
 const {
   calculatePriceFromMenuList,
   getCartMenuArrayWithoutOptions,
 } = require('../services/cartServices');
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
+const { Op } = require('sequelize');
 
 module.exports.createCart = async (req, res, next) => {
   const t = await sequelize.transaction();
@@ -80,6 +87,7 @@ exports.appendMenu = async (req, res, next) => {
 
     for (let optionGroup of menu.optionGroups) {
       for (let option of optionGroup.options) {
+        console.log(orderMenu.id, option.id);
         await OrderMenuOption.create(
           {
             orderMenuId: orderMenu.id,
@@ -90,11 +98,43 @@ exports.appendMenu = async (req, res, next) => {
       }
     }
 
+    await t.commit();
+
     const cart = await Order.findByPk(orderId);
 
     res.json({ message: 'successfully added menu to cart!' });
   } catch (error) {
+    await t.rollback();
     next(error);
+  }
+};
+
+exports.removeMenu = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { orderMenuId } = req.params;
+
+    const orderMenu = await OrderMenu.findByPk(orderMenuId, { transaction: t });
+
+    await OrderMenuOption.destroy({
+      where: {
+        orderMenuId,
+      },
+      transaction: t,
+    });
+
+    await OrderMenu.destroy({
+      where: {
+        id: orderMenuId,
+      },
+      transaction: t,
+    });
+
+    await t.commit();
+    res.sendStatus(204);
+  } catch (err) {
+    await t.rollback();
+    next(err);
   }
 };
 
@@ -102,7 +142,8 @@ exports.appendMenu = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = JSON.parse(JSON.stringify(req.user));
-    res.json({ user });
+    const customer = await Customer.findByPk(user.id);
+    res.json({ customer });
   } catch (err) {
     next(err);
   }
@@ -110,12 +151,8 @@ exports.getMe = async (req, res, next) => {
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    console.log('zero');
     const { firstName, lastName } = req.body;
-    console.log('first');
     const customer = req.user;
-    console.log('two');
-    console.log(customer);
 
     if (!customer) {
       createError('You are unauthorized', 400);
@@ -126,12 +163,17 @@ exports.updateProfile = async (req, res, next) => {
       createError('You cannot update empty data', 400);
     }
 
-    customer.firstName = firstName;
-    customer.lastName = lastName;
+    if (firstName) {
+      customer.firstName = firstName;
+    }
+
+    if (lastName) {
+      customer.lastName = lastName;
+    }
 
     // if have customer profile image, then destroy image before update new image
     if (req.imageFile && customer.profileImage) {
-      const deleteRes = await destroy(customer.profileImage);
+      const deleteRes = await destroy(customer.profileImagePublicId);
       console.log(deleteRes);
     }
 

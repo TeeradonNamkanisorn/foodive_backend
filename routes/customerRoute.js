@@ -8,9 +8,14 @@ router.get('/getMe', customerController.getMe);
 
 router.post('/addCart', customerController.createCart);
 
-router.patch('/cart/:cartId/append-menu', customerController.appendMenu);
+router.post('/cart/:cartId/append-menu', customerController.appendMenu);
 
-router.patch(
+router.delete(
+  '/cart/:cartId/delete-menu/:orderMenuId',
+  customerController.removeMenu,
+);
+
+router.post(
   '/update',
   multer.single('profileImage'),
   uploadImage,
