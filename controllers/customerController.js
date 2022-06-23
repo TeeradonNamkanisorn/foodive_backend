@@ -11,20 +11,6 @@ module.exports.createCart = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { menus, restaurantId } = req.body;
-    const example = [
-      {
-        id: 1,
-        name: 'aaa',
-        menuGroups: [
-          {
-            id: 2,
-            name: 'abc',
-            menuOptons: [{ id: 2, name: 'cde', menuOptionGroupId: 2 }],
-          },
-          { id: 2, name: 'ddd', menuOptionGroupId: 2 },
-        ],
-      },
-    ];
 
     const order = await Order.create(
       {
@@ -40,7 +26,6 @@ module.exports.createCart = async (req, res, next) => {
     for (let menu of menus) {
       const menuId = menu.id;
       const menuComment = menu.comment;
-      console.log(order.id);
       const orderMenu = await OrderMenu.create(
         { menuId, comment: menuComment, orderId: order.id },
         { transaction: t },
@@ -72,11 +57,44 @@ module.exports.createCart = async (req, res, next) => {
       transaction: t,
     });
 
+    await t.commit();
     res.json({ cart });
-    // await t.commit();
   } catch (err) {
     await t.rollback();
     next(err);
+  }
+};
+
+exports.appendMenu = async (req, res, next) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { menu } = req.body;
+    const { cartId: orderId } = req.params;
+
+    const orderMenu = await OrderMenu.create({
+      orderId,
+      comment: menu.comment,
+      menuId: menu.id,
+    });
+
+    for (let optionGroup of menu.optionGroups) {
+      for (let option of optionGroup.options) {
+        await OrderMenuOption.create(
+          {
+            orderMenuId: orderMenu.id,
+            menuOptionId: option.id,
+          },
+          { transaction: t },
+        );
+      }
+    }
+
+    const cart = await Order.findByPk(orderId);
+
+    res.json({ message: 'successfully added menu to cart!' });
+  } catch (error) {
+    next(error);
   }
 };
 

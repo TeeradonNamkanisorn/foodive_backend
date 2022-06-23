@@ -6,11 +6,9 @@ const authenticator = require('../middlewares/authenticator');
 
 router.get('/getMe', customerController.getMe);
 
-router.post(
-  '/addCart',
-  authenticator('customer'),
-  customerController.createCart,
-);
+router.post('/addCart', customerController.createCart);
+
+router.patch('/cart/:cartId/append-menu', customerController.appendMenu);
 
 router.patch(
   '/update',
