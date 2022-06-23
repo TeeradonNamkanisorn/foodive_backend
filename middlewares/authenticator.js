@@ -6,17 +6,17 @@ module.exports = (role) => async (req, res, next) => {
   try {
     const { authorization } = req.headers;
     if (!authorization || !authorization.startsWith("Bearer")) {
-      createError("you are unauthorized", 401);
+      createError("You are unauthorized", 401);
     }
 
     const token = authorization.split(" ")[1];
     if (!token) {
-      createError("you are unauthorized", 401);
+      createError("You are unauthorized", 401);
     }
 
     const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    if (payload.role !== role) createError("invalid role", 401);
+    if (payload.role !== role) createError("Invalid role", 401);
 
     let user;
     if (payload.role === "restaurant") {
@@ -42,6 +42,8 @@ module.exports = (role) => async (req, res, next) => {
     }
 
     req.user = user;
+
+    console.log(user);
     next();
   } catch (err) {
     next(err);

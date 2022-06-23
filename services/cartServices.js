@@ -28,7 +28,7 @@ exports.getCartMenuArrayWithoutOptions = async (menus) => {
     }))
 }
 
-exports.getCartMenuOptionsArray = async (menus, restaurantId)
+// exports.getCartMenuOptionsArray = async (menus, restaurantId)
 
 
 //********* เขียนไว้เฉยๆยังไม่ได้ทดสอบ ************/
