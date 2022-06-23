@@ -5,7 +5,6 @@ const uploadImage = async (req, res, next) => {
     const imagePath = req.file.path;
 
     const response = await cloudinary.upload(imagePath);
-    console.log(response);
 
     req.imageFile = response;
 

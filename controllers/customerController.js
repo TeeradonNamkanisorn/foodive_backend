@@ -13,12 +13,8 @@ exports.getMe = async (req, res, next) => {
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    console.log("zero");
     const { name, firstName, lastName } = req.body;
-    console.log("first");
     const customer = req.user;
-    console.log("two");
-    console.log(customer);
 
     if (!customer) {
       createError("You are unauthorized", 400);
@@ -35,7 +31,7 @@ exports.updateProfile = async (req, res, next) => {
 
     // if have customer profile image, then destroy image before update new image
     if (req.imageFile && customer.profileImage) {
-      const deleteRes = await destroy(customer.profileImage);
+      const deleteRes = await destroy(customer.profileImagePublicId);
       console.log(deleteRes);
       customer.profileImagePublicId = req.imageFile.public_id;
       customer.profileImage = req.imageFile.secure_url;
