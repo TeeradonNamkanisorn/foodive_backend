@@ -251,6 +251,7 @@ exports.changeCategories = async (req, res, next) => {
   }
 };
 
+//Need to add third driver status : waiting
 exports.pickDriver = async (req, res, next) => {
   try {
     const restaurant = req.user;
