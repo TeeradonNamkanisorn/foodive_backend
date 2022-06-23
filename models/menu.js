@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false
         },
+        //base price; options' prices not included.
         price: {
             type: DataTypes.FLOAT,
             defaultValue: 0,
@@ -16,9 +17,12 @@ module.exports = (sequelize, DataTypes) => {
         // Used to delete cloudinary image when update or deleting
         menuImagePublicId: {
             type: DataTypes.STRING
+        },
+        description: {
+            type: DataTypes.TEXT,
         }
     })
-    Menu.associate = ({Restaurant, Category, MenuCategory, MenuOption}) => {
+    Menu.associate = ({Restaurant, Category, MenuCategory, MenuOptionGroup, OrderMenu}) => {
         Menu.belongsTo(Restaurant, {
             allowNull: false,
             onDelete: "RESTRICT",
@@ -29,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
             }
         })
 
+
         // Menu { include: Category } NOT include : MenuCategory
         Menu.belongsToMany(Category, {
             through: MenuCategory,
@@ -37,7 +42,16 @@ module.exports = (sequelize, DataTypes) => {
             }
         })
 
-        Menu.hasMany(MenuOption, {
+        Menu.hasMany(MenuOptionGroup, {
+            foreignKey: {
+                name: "menuId",
+                allowNull: false
+            },
+            onDelete: "RESTRICT",
+            onUpdate: "RESTRICT"
+        })
+
+        Menu.hasMany(OrderMenu, {
             foreignKey: {
                 name: "menuId",
                 allowNull: false

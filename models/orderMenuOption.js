@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    const OrderMenuOption = sequelize.define("OrderMenuOptions", {
+    const OrderMenuOption = sequelize.define("OrderMenuOption", {
 
     });
 
