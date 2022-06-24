@@ -4,6 +4,9 @@ const router = require('express').Router();
 const restaurantController = require('../controllers/restaurantController');
 const { uploadImage } = require('../middlewares/cloudinaryUploads');
 
+router.get('/getMe', restaurantController.getMe);
+
+router.get('/:id', restaurantController.getRestaurantById);
 router.post(
   '/:restaurantId/addMenu',
   multer.single('menuImage'),

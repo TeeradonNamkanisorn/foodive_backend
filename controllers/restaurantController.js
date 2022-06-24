@@ -5,11 +5,22 @@ const {
   MenuOptionGroup,
   MenuCategory,
   Driver,
+  Restaurant,
 } = require('../models');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
 const clearFolder = require('../services/clearFolder');
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
+
+exports.getMe = async (req, res, next) => {
+  try {
+    const user = JSON.parse(JSON.stringify(req.user));
+    const restaurant = await Restaurant.findByPk(user.id);
+    res.json({ restaurant });
+  } catch (err) {
+    next(err);
+  }
+};
 
 exports.addMenu = async (req, res, next) => {
   try {
@@ -297,5 +308,27 @@ exports.pickDriver = async (req, res, next) => {
     res.json({ driver: chosenDriver });
   } catch (err) {
     next(err);
+  }
+};
+
+exports.getRestaurantById = async (req, res, next) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params;
+
+    const restaurant = await Restaurant.findAll({
+      where: {
+        id: id,
+      },
+      transaction: t,
+    });
+
+    await t.commit();
+
+    res.json({ restaurant });
+  } catch (error) {
+    await t.rollback();
+    next(error);
   }
 };

@@ -244,6 +244,7 @@ exports.updateProfile = async (req, res, next) => {
   }
 };
 
+/// test
 exports.searchByMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
