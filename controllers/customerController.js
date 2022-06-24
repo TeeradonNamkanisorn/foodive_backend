@@ -248,7 +248,7 @@ exports.searchByMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { menuName } = req.params;
-
+    console.log('');
     const menu = await Menu.findAll({
       where: {
         name: menuName,
