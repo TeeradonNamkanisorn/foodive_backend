@@ -1,12 +1,11 @@
-const createError = require("../services/createError");
-const { destroy } = require("../utils/cloudinary");
-const { Driver } = require("../models");
+const createError = require('../services/createError');
+const { destroy } = require('../utils/cloudinary');
+const { Driver } = require('../models');
 
 exports.getMe = async (req, res, next) => {
   try {
     const user = JSON.parse(JSON.stringify(req.user));
-    const driver = await Driver.findByPk(user.id);
-    res.json({ driver });
+    res.json({ user });
   } catch (err) {
     next(err);
   }
@@ -18,11 +17,11 @@ exports.updateProfile = async (req, res, next) => {
     const { firstName, lastName } = req.body;
 
     if (!driver) {
-      createError("You are unauthorize.", 400);
+      createError('You are unauthorize.', 400);
     }
 
     if (!firstName && !lastName && !req.imageFile) {
-      createError("You cannot update empty data", 400);
+      createError('You cannot update empty data', 400);
     }
 
     if (firstName) {
@@ -45,7 +44,7 @@ exports.updateProfile = async (req, res, next) => {
 
     await driver.save();
 
-    res.json({ message: "Update profile success." });
+    res.json({ message: 'Update profile success.' });
   } catch (err) {
     next(err);
   }
@@ -57,15 +56,15 @@ exports.updateStatus = async (req, res, next) => {
     const { status } = req.body;
 
     if (!driver) {
-      createError("You are unauthorize.", 400);
+      createError('You are unauthorize.', 400);
     }
 
-    if (status !== "UNAVAILABLE" && status !== "AVAILABLE") {
+    if (status !== 'UNAVAILABLE' && status !== 'AVAILABLE') {
       createError("Status must be 'AVAILABLE' or 'UNAVAILABLE'", 400);
     }
 
     if (driver.status === status) {
-      createError("You cannot update same status as your current status", 400);
+      createError('You cannot update same status as your current status', 400);
     }
 
     if (status) {
@@ -74,7 +73,7 @@ exports.updateStatus = async (req, res, next) => {
 
     await driver.save();
 
-    res.json({ message: "Update status success" });
+    res.json({ message: 'Update status success' });
   } catch (err) {
     next(err);
   }

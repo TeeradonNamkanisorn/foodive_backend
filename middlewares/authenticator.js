@@ -24,28 +24,27 @@ module.exports = (role) => async (req, res, next) => {
         where: {
           email: payload.email,
         },
+        attributes: { exclude: ['password'] },
       });
     } else if (payload.role === 'customer') {
       user = await Customer.findOne({
         where: {
           email: payload.email,
         },
+        attributes: { exclude: ['password'] },
       });
     } else if (payload.role === 'driver') {
       user = await Driver.findOne({
         where: {
           email: payload.email,
         },
+        attributes: { exclude: ['password'] },
       });
     } else {
       createError('You are unauthorized', 401);
     }
 
     req.user = user;
-<<<<<<< HEAD
-=======
-
->>>>>>> bf52e7262c6ffef75df76f60b1698ba9b20d5426
     next();
   } catch (err) {
     next(err);

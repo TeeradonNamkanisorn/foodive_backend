@@ -19,4 +19,9 @@ router.patch(
   customerController.updateProfile,
 );
 
+// customer address
+router.post('/address', customerController.createAddress);
+
+router.delete('/address/:addressId', customerController.deleteAddress);
+
 module.exports = router;
