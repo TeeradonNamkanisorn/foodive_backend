@@ -7,7 +7,7 @@ const {
   Customer,
   Menu,
   Restaurant,
-  Category,
+  Tag,
 } = require('../models');
 const {
   calculatePriceFromMenuList,

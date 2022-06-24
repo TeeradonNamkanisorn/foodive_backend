@@ -1,20 +1,20 @@
 module.exports = (sequelize, DataTypes) => {
-  const Category = sequelize.define('Category', {
+  const Tag = sequelize.define('Tag', {
     name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
   });
 
-  Category.associate = ({ Menu, MenuCategory }) => {
-    Category.belongsToMany(Menu, {
-      through: MenuCategory,
+  Tag.associate = ({ Menu, MenuTag }) => {
+    Tag.belongsToMany(Menu, {
+      through: MenuTag,
       foreignKey: {
-        name: 'categoryId',
+        name: 'tagId',
       },
       onDelete: 'SET NULL',
       onUpdate: 'SET NULL',
     });
   };
-  return Category;
+  return Tag;
 };

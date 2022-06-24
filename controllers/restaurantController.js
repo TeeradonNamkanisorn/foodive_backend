@@ -3,7 +3,7 @@ const {
   MenuOption,
   sequelize,
   MenuOptionGroup,
-  MenuCategory,
+  MenuTag,
   Driver,
 } = require('../models');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
@@ -203,19 +203,19 @@ exports.modifyOptions = async (req, res, next) => {
   }
 };
 
-exports.assignCategories = async (req, res, next) => {
+exports.assignTags = async (req, res, next) => {
   try {
-    const { categoryIds, menuId } = req.body;
+    const { tagIds, menuId } = req.body;
     const { id: restaurantId } = req.user;
 
-    const arr = categoryIds.map((cat) => ({
-      categoryId: cat,
+    const arr = tagIds.map((cat) => ({
+      tagId: cat,
       menuId,
       restaurantId,
     }));
     console.log(arr);
 
-    await MenuCategory.bulkCreate(arr);
+    await MenuTag.bulkCreate(arr);
 
     res.json({ message: 'Success!' });
   } catch (err) {
@@ -223,25 +223,25 @@ exports.assignCategories = async (req, res, next) => {
   }
 };
 
-exports.changeCategories = async (req, res, next) => {
+exports.changeTags = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const restaurantId = req.user.id;
-    const { categoryIds, menuId } = req.body;
-    await MenuCategory.destroy({
+    const { tagIds, menuId } = req.body;
+    await MenuTag.destroy({
       where: {
         menuId,
       },
       transaction: t,
     });
 
-    const arr = categoryIds.map((cat) => ({
-      categoryId: cat,
+    const arr = tagIds.map((cat) => ({
+      tagId: cat,
       menuId,
       restaurantId,
     }));
 
-    await MenuCategory.bulkCreate(arr, { transaction: t });
+    await MenuTag.bulkCreate(arr, { transaction: t });
 
     await t.commit();
     res.json({ message: 'Updated Successfully!' });

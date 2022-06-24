@@ -25,7 +25,7 @@ router.put(
   restaurantController.modifyOptions,
 );
 
-router.post('/assign-categories', restaurantController.assignCategories);
-router.put('/change-categories', restaurantController.changeCategories);
+router.post('/assign-tags', restaurantController.assignTags);
+router.put('/change-tags', restaurantController.changeTags);
 router.get('/pickDriver', restaurantController.pickDriver);
 module.exports = router;
