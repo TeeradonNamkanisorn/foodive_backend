@@ -27,6 +27,8 @@ router.post(
   customerController.updateProfile,
 );
 
+router.get('/cart', customerController.getAllCarts);
+
 // customer address
 router.post('/address', customerController.createAddress);
 

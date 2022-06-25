@@ -54,7 +54,7 @@ const customers = [
     password: '$2a$10$6VVLjzxhP7r9OtL7FpG/Auhn6PYwyoOeULtZLZGnW..qYqE8WmcZa',
     firstName: 'cat',
     lastName: 'catty',
-    phoneNumber: '0922798234',
+    phoneNumber: '0922798235',
   },
 ];
 

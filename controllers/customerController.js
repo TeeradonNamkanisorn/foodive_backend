@@ -314,6 +314,7 @@ exports.createAddress = async (req, res, next) => {
       addressGoogleMap,
       latitude,
       longitude,
+      message,
     } = req.body;
     const customer = req.user;
 
@@ -368,6 +369,33 @@ exports.deleteAddress = async (req, res, next) => {
       message: 'Delete address success.',
     });
   } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAllCarts = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const customerId = req.user.id;
+    const carts = await Order.findAll(
+      {
+        where: {
+          customerId,
+          status: 'IN_CART',
+        },
+        include: {
+          model: OrderMenu,
+          include: {
+            model: OrderMenuOption,
+          },
+        },
+      },
+      { transaction: t },
+    );
+
+    res.json({ carts });
+  } catch (err) {
+    await t.rollback();
     next(err);
   }
 };
