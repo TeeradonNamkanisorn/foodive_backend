@@ -16,6 +16,7 @@ const {
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
 const { Op } = require('sequelize');
+const getDistanceFromLatLonInKm = require('../services/calcDistance');
 
 module.exports.createCart = async (req, res, next) => {
   const t = await sequelize.transaction();
@@ -187,6 +188,65 @@ exports.modifyMenu = async (req, res, next) => {
 
 exports.fetchMenus = async (req, res, next) => {
   try {
+    const { latitude, longitude, tag } = req.body;
+    let restaurants = await Restaurant.findAll({
+      include: {
+        model: Menu,
+        include: Tag,
+      },
+    });
+    restaurants = JSON.parse(JSON.stringify(restaurants));
+
+    restaurants = restaurants.map((restaurant) => {
+      // count the number of matched tags in the restaurant
+      const matches = restaurant.Menus.reduce((sum, menu) => {
+        console.log(menu.Tags);
+        if (menu.Tags.some((curTag) => curTag.name.includes(tag))) {
+          return sum + 1;
+        } else {
+          return sum;
+        }
+      }, 0);
+      console.log('matches: ', matches);
+      const distance = getDistanceFromLatLonInKm(
+        latitude,
+        longitude,
+        restaurant.latitude,
+        restaurant.longitude,
+      );
+
+      const score = matches / (distance + 1) ** 2;
+      return { ...restaurant, distance, matches, score };
+    });
+
+    restaurants.sort((a, b) => b.score - a.score);
+
+    // select one menu from restaurant
+    const menus = restaurants.map((restaurant) => {
+      // will write the algorithm here
+      console.log(restaurant.distance);
+
+      const chosenMenu = restaurant.Menus[0];
+
+      return {
+        id: chosenMenu.id,
+        name: chosenMenu.name,
+        description: chosenMenu.description,
+        price: chosenMenu.price,
+        menuImage: chosenMenu.menuImage,
+        Restaurant: {
+          name: restaurant.name,
+          phoneNumber: restaurant.phoneNumber,
+          status: restaurant.status,
+          image: restaurant.image,
+          distance: restaurant.distance,
+          matches: restaurant.matches,
+          score: restaurant.score,
+        },
+      };
+    });
+
+    res.json({ menus });
   } catch (error) {
     next(error);
   }

@@ -27,4 +27,6 @@ router.post(
   customerController.updateProfile,
 );
 
+router.get('/menu', customerController.fetchMenus);
+
 module.exports = router;

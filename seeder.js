@@ -7,6 +7,7 @@ const {
   MenuOption,
   MenuOptionGroup,
   sequelize,
+  MenuTag,
 } = require('./models');
 
 const foodTags = [
@@ -269,6 +270,25 @@ const menuOptions = [
   },
 ];
 
+const menuTags = [
+  {
+    menuId: 1,
+    tagId: 1,
+  },
+  {
+    menuId: 1,
+    tagId: 2,
+  },
+  {
+    menuId: 2,
+    tagId: 1,
+  },
+  {
+    menuId: 2,
+    tagId: 2,
+  },
+];
+
 const seed = async () => {
   const t = await sequelize.transaction();
   try {
@@ -282,6 +302,7 @@ const seed = async () => {
     await Menu.bulkCreate(menus, { transaction: t });
     await MenuOptionGroup.bulkCreate(menuOptionGroups, { transaction: t });
     await MenuOption.bulkCreate(menuOptions, { transaction: t });
+    await MenuTag.bulkCreate(menuTags, { transaction: t });
     await t.commit();
   } catch (err) {
     await t.rollback();
