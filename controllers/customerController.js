@@ -8,6 +8,7 @@ const {
   Menu,
   Restaurant,
   Tag,
+  Address,
 } = require('../models');
 const {
   calculatePriceFromMenuList,
@@ -256,8 +257,8 @@ exports.fetchMenus = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = JSON.parse(JSON.stringify(req.user));
-    const customer = await Customer.findByPk(user.id);
-    res.json({ customer });
+
+    res.json({ user });
   } catch (err) {
     next(err);
   }
@@ -299,6 +300,73 @@ exports.updateProfile = async (req, res, next) => {
     await customer.save();
 
     res.json({ message: 'Update profile success' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// address
+exports.createAddress = async (req, res, next) => {
+  try {
+    const {
+      addressType,
+      addressCustomer,
+      addressGoogleMap,
+      latitude,
+      longitude,
+    } = req.body;
+    const customer = req.user;
+
+    if (!customer) {
+      createError('You are unauthorized.', 400);
+    }
+
+    if (!addressCustomer) {
+      createError('Require customer address.', 400);
+    }
+
+    if (!latitude) {
+      createError('Require latitude.', 400);
+    }
+    if (!longitude) {
+      createError('Require longitude.', 400);
+    }
+
+    const address = await Address.create({
+      addressType: addressType ? addressType : 'OTHER',
+      addressCustomer,
+      addressGoogleMap: addressGoogleMap ? addressGoogleMap : 'Not found',
+      latitude,
+      longitude,
+      customerId: customer.id,
+    });
+
+    res.json({ message: 'Create address success.', address });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteAddress = async (req, res, next) => {
+  try {
+    const customer = req.user;
+    const { addressId } = req.params;
+
+    if (!customer) {
+      createError('You are unauthorized.', 400);
+    }
+
+    const address = await Address.findOne({ where: { id: addressId } });
+
+    if (!address) {
+      createError('Cannot find this address', 400);
+    }
+
+    await address.destroy();
+
+    res.json({
+      message: 'Delete address success.',
+    });
   } catch (err) {
     next(err);
   }

@@ -27,6 +27,9 @@ router.post(
   customerController.updateProfile,
 );
 
-router.get('/menu', customerController.fetchMenus);
+// customer address
+router.post('/address', customerController.createAddress);
+
+router.delete('/address/:addressId', customerController.deleteAddress);
 
 module.exports = router;

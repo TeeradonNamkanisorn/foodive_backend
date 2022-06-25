@@ -1,4 +1,4 @@
-const { Restaurant, Customer, Driver, Category } = require('../models');
+const { Restaurant, Customer, Driver, Tag } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const createError = require('../services/createError');
