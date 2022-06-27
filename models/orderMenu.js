@@ -7,11 +7,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
     },
     comment: {
+      // Validate length later
       type: DataTypes.TEXT,
+      validate: {
+        len: 50,
+      },
     },
   });
 
-  OrderMenu.associate = ({ Order, OrderMenuOption, Menu }) => {
+  OrderMenu.associate = ({ Order, OrderMenuOptionGroup, Menu }) => {
     OrderMenu.belongsTo(Order, {
       foreignKey: {
         name: 'orderId',
@@ -21,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    OrderMenu.hasMany(OrderMenuOption, {
+    OrderMenu.hasMany(OrderMenuOptionGroup, {
       foreignKey: {
         name: 'orderMenuId',
         // allowNull: false

@@ -10,15 +10,9 @@ router.post('/addCart', customerController.createCart);
 
 router.post('/cart/:cartId/append-menu', customerController.appendMenu);
 
-router.delete(
-  '/cart/:cartId/delete-menu/:orderMenuId',
-  customerController.removeMenu,
-);
+router.delete('/deleteMenu', customerController.removeMenu);
 
-router.patch(
-  '/cart/:cartId/modify-menu/:orderMenuId',
-  customerController.modifyMenu,
-);
+router.put('/modifyMenu', customerController.modifyMenu);
 
 router.post(
   '/update',

@@ -5,6 +5,7 @@ const {
   sequelize,
   OrderMenuOption,
   Customer,
+  OrderMenuOptionGroup,
   Menu,
   Restaurant,
   Tag,
@@ -18,6 +19,64 @@ const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
 const { Op } = require('sequelize');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
+
+// module.exports.createCart = async (req, res, next) => {
+//   const t = await sequelize.transaction();
+//   try {
+//     const { menus, restaurantId } = req.body;
+
+//     const order = await Order.create(
+//       {
+//         customerId: req.user.id,
+//         //driverId later when the restaurant confirms the order
+//         restaurantId,
+//       },
+//       {
+//         transaction: t,
+//       },
+//     );
+
+//     for (let menu of menus) {
+//       const menuId = menu.id;
+//       const menuComment = menu.comment;
+//       const orderMenu = await OrderMenu.create(
+//         { menuId, comment: menuComment, orderId: order.id },
+//         { transaction: t },
+//       );
+
+//       for (let optionGroup of menu.optionGroups) {
+//         for (let option of optionGroup.options) {
+//           await OrderMenuOption.create(
+//             {
+//               orderMenuId: orderMenu.id,
+//               menuOptionId: option.id,
+//             },
+//             { transaction: t },
+//           );
+//         }
+//       }
+//     }
+
+//     const cart = await Order.findOne({
+//       where: {
+//         id: order.id,
+//       },
+//       include: {
+//         model: OrderMenu,
+//         include: {
+//           model: OrderMenuOption,
+//         },
+//       },
+//       transaction: t,
+//     });
+
+//     await t.commit();
+//     res.json({ cart });
+//   } catch (err) {
+//     await t.rollback();
+//     next(err);
+//   }
+// };
 
 module.exports.createCart = async (req, res, next) => {
   const t = await sequelize.transaction();
@@ -44,10 +103,19 @@ module.exports.createCart = async (req, res, next) => {
       );
 
       for (let optionGroup of menu.optionGroups) {
+        const orderOptionGroup = await OrderMenuOptionGroup.create(
+          {
+            orderMenuId: orderMenu.id,
+            menuOptionGroupId: optionGroup.id,
+          },
+          { transaction: t },
+        );
+
         for (let option of optionGroup.options) {
           await OrderMenuOption.create(
             {
               orderMenuId: orderMenu.id,
+              orderMenuOptionGroupId: orderOptionGroup.id,
               menuOptionId: option.id,
             },
             { transaction: t },
@@ -63,7 +131,10 @@ module.exports.createCart = async (req, res, next) => {
       include: {
         model: OrderMenu,
         include: {
-          model: OrderMenuOption,
+          model: OrderMenuOptionGroup,
+          include: {
+            model: OrderMenuOption,
+          },
         },
       },
       transaction: t,
@@ -91,11 +162,20 @@ exports.appendMenu = async (req, res, next) => {
     });
 
     for (let optionGroup of menu.optionGroups) {
+      console.log('asdfasdfas', optionGroup.id);
+      const orderOptionGroup = await OrderMenuOptionGroup.create(
+        {
+          orderMenuId: orderMenu.id,
+          menuOptionGroupId: optionGroup.id,
+        },
+        { transaction: t },
+      );
+
       for (let option of optionGroup.options) {
-        console.log(orderMenu.id, option.id);
         await OrderMenuOption.create(
           {
             orderMenuId: orderMenu.id,
+            orderMenuOptionGroupId: orderOptionGroup.id,
             menuOptionId: option.id,
           },
           { transaction: t },
@@ -117,13 +197,30 @@ exports.appendMenu = async (req, res, next) => {
 exports.removeMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
-    const { orderMenuId } = req.params;
+    const { orderMenuId } = req.body;
 
     const orderMenu = await OrderMenu.findByPk(orderMenuId, { transaction: t });
 
+    const orderMenuOptionGroups = await OrderMenuOptionGroup.findAll({
+      where: {
+        orderMenuId: orderMenu.id,
+      },
+    });
+
+    const optionGroupIds = orderMenuOptionGroups.map((el) => el.id);
+
     await OrderMenuOption.destroy({
       where: {
-        orderMenuId,
+        orderMenuOptionGroupId: {
+          [Op.in]: optionGroupIds,
+        },
+      },
+      transaction: t,
+    });
+
+    await OrderMenuOptionGroup.destroy({
+      where: {
+        orderMenuId: orderMenu.id,
       },
       transaction: t,
     });
@@ -147,8 +244,20 @@ exports.removeMenu = async (req, res, next) => {
 exports.modifyMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
-    const { cartId, orderMenuId } = req.params;
-    const { orderMenuOptions, comment } = req.body;
+    const { newOrderMenuOptionGroups, comment, orderMenuId } = req.body;
+    const orderMenuOptionGroups = await OrderMenuOptionGroup.findAll(
+      {
+        where: {
+          orderMenuId,
+        },
+      },
+      { transaction: t },
+    );
+
+    const orderMenuOptionGroupIds = JSON.parse(
+      JSON.stringify(orderMenuOptionGroups),
+    ).map((el) => el.id);
+
     await OrderMenu.update(
       { comment },
       {
@@ -158,27 +267,71 @@ exports.modifyMenu = async (req, res, next) => {
         transaction: t,
       },
     );
+
     await OrderMenuOption.destroy(
-      { where: { orderMenuId } },
+      {
+        where: {
+          orderMenuOptionGroupId: {
+            [Op.in]: orderMenuOptionGroupIds,
+          },
+        },
+      },
       { transaction: t },
     );
 
-    const newOptions = orderMenuOptions.map((e) => ({
-      orderMenuId: orderMenuId,
-      menuOptionId: e.id,
-    }));
-    await OrderMenuOption.bulkCreate(newOptions, { transaction: t });
+    await OrderMenuOptionGroup.destroy({
+      where: {
+        orderMenuId,
+      },
+      transaction: t,
+    });
+
+    for (let optionGroup of newOrderMenuOptionGroups) {
+      const orderOptionGroup = await OrderMenuOptionGroup.create(
+        {
+          orderMenuId,
+          menuOptionGroupId: optionGroup.id,
+        },
+        { transaction: t },
+      );
+
+      for (let option of optionGroup.options) {
+        await OrderMenuOption.create(
+          {
+            orderMenuId,
+            orderMenuOptionGroupId: orderOptionGroup.id,
+            menuOptionId: option.id,
+          },
+          { transaction: t },
+        );
+      }
+    }
+
+    // await OrderMenuOptionGroup.create({
+    //   orderMenuId,
+    //   menuOptionGroupId
+    // }, {transaction : t})
+
+    // const newOptions = orderMenuOptions.map((e) => ({
+    //   orderMenuId: orderMenuId,
+    //   menuOptionId: e.id,
+    // }));
+    // await OrderMenuOption.bulkCreate(newOptions, { transaction: t });
 
     const orderMenu = await OrderMenu.findOne({
       where: {
         id: orderMenuId,
       },
-      include: OrderMenuOption,
+      include: {
+        model: OrderMenuOptionGroup,
+        include: {
+          model: OrderMenuOption,
+        },
+      },
       transaction: t,
     });
 
-    // await t.commit();
-    await t.rollback();
+    await t.commit();
 
     res.json({ orderMenu });
   } catch (err) {
@@ -379,21 +532,16 @@ exports.getAllCarts = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const customerId = req.user.id;
-    const carts = await Order.findAll(
-      {
-        where: {
-          customerId,
-          status: 'IN_CART',
-        },
-        include: {
-          model: OrderMenu,
-          include: {
-            model: OrderMenuOption,
-          },
-        },
+    const carts = await Order.findAll({
+      where: {
+        customerId,
+        status: 'IN_CART',
       },
-      { transaction: t },
-    );
+      include: {
+        model: OrderMenu,
+      },
+      transaction: t,
+    });
 
     res.json({ carts });
   } catch (err) {

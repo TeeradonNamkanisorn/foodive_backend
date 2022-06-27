@@ -15,10 +15,18 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  MenuOptionGroup.associate = ({ Menu, MenuOption }) => {
+  MenuOptionGroup.associate = ({ Menu, MenuOption, OrderMenuOptionGroup }) => {
     MenuOptionGroup.belongsTo(Menu, {
       foreignKey: {
         name: 'menuId',
+        allowNull: false,
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+    MenuOptionGroup.hasMany(OrderMenuOptionGroup, {
+      foreignKey: {
+        name: 'menuOptionGroupId',
         allowNull: false,
       },
       onDelete: 'RESTRICT',
