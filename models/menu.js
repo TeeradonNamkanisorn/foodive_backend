@@ -24,8 +24,8 @@ module.exports = (sequelize, DataTypes) => {
   });
   Menu.associate = ({
     Restaurant,
-    Category,
-    MenuCategory,
+    Tag,
+    MenuTag,
     MenuOptionGroup,
     OrderMenu,
   }) => {
@@ -39,9 +39,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     });
 
-    // Menu { include: Category } NOT include : MenuCategory
-    Menu.belongsToMany(Category, {
-      through: MenuCategory,
+    // Menu { include: Tag } NOT include : MenuTag
+    Menu.belongsToMany(Tag, {
+      through: MenuTag,
       foreignKey: {
         name: 'menuId',
       },
@@ -59,6 +59,15 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Menu.hasMany(OrderMenu, {
+      foreignKey: {
+        name: 'menuId',
+        allowNull: false,
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    Menu.hasMany(Category, {
       foreignKey: {
         name: 'menuId',
         allowNull: false,

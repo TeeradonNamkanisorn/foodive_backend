@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
-  const MenuCategory = sequelize.define(
-    'MenuCategory',
+  const MenuTag = sequelize.define(
+    'MenuTag',
     {
       id: {
         type: DataTypes.INTEGER,
@@ -10,11 +10,11 @@ module.exports = (sequelize, DataTypes) => {
       menuId: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'Categories',
+          model: 'Tags',
           key: 'id',
         },
       },
-      categoryId: {
+      tagId: {
         type: DataTypes.INTEGER,
         references: {
           model: 'Menus',
@@ -28,10 +28,10 @@ module.exports = (sequelize, DataTypes) => {
     {
       indexes: [
         //same as unique: true but less prone to a certain bug
-        { unique: true, fields: ['menuId', 'categoryId'] },
+        { unique: true, fields: ['menuId', 'tagId'] },
       ],
     },
   );
 
-  return MenuCategory;
+  return MenuTag;
 };

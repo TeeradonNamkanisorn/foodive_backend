@@ -4,17 +4,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    //base price; options' prices not included.
+    RestaurantID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   });
-
-  Category.associate = ({ Menu, MenuCategory }) => {
-    Category.belongsToMany(Menu, {
-      through: MenuCategory,
+  Category.associate = (Menu) => {
+    Category.belongsTo(Menu, {
+      allowNull: false,
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
       foreignKey: {
-        name: 'categoryId',
+        name: 'menuId',
+        allowNull: false,
       },
-      onDelete: 'SET NULL',
-      onUpdate: 'SET NULL',
     });
   };
+
   return Category;
 };

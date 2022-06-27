@@ -7,7 +7,7 @@ const {
   Customer,
   Menu,
   Restaurant,
-  Category,
+  Tag,
 } = require('../models');
 const {
   calculatePriceFromMenuList,
@@ -263,5 +263,27 @@ exports.searchByMenu = async (req, res, next) => {
     await t.commit();
   } catch (err) {
     next(err);
+  }
+};
+
+exports.getRestaurantById = async (req, res, next) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params;
+
+    const restaurant = await Restaurant.findAll({
+      where: {
+        id: id,
+      },
+      transaction: t,
+    });
+
+    await t.commit();
+
+    res.json({ restaurant });
+  } catch (error) {
+    await t.rollback();
+    next(error);
   }
 };

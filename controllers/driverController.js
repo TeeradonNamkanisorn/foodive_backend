@@ -96,3 +96,5 @@ exports.updateLocation = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.acceptOrder = async (req, res, next) => {};

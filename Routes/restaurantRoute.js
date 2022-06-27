@@ -6,7 +6,6 @@ const { uploadImage } = require('../middlewares/cloudinaryUploads');
 
 router.get('/getMe', restaurantController.getMe);
 
-router.get('/:id', restaurantController.getRestaurantById);
 router.post(
   '/:restaurantId/addMenu',
   multer.single('menuImage'),
@@ -28,8 +27,8 @@ router.put(
   restaurantController.modifyOptions,
 );
 
-router.post('/assign-categories', restaurantController.assignCategories);
-router.put('/change-categories', restaurantController.changeCategories);
+router.post('/assign-tags', restaurantController.assignTags);
+router.put('/change-tags', restaurantController.changeTags);
 router.get('/pickDriver', restaurantController.pickDriver);
 
 module.exports = router;
