@@ -196,6 +196,8 @@ exports.fetchMenus = async (req, res, next) => {
         include: Tag,
       },
     });
+
+    console.log(latitude, longitude);
     restaurants = JSON.parse(JSON.stringify(restaurants));
 
     restaurants = restaurants.map((restaurant) => {
