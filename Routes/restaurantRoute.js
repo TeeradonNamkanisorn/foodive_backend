@@ -12,20 +12,22 @@ router.post(
   uploadImage,
   restaurantController.addMenu,
 );
+
 router.put(
   '/:restaurantId/menu/:menuId',
   multer.single('menuImage'),
   uploadImage,
   restaurantController.editMenu,
 );
-router.post(
-  '/:restaurantId/menu/:menuId/addOptions',
-  restaurantController.addOptions,
-);
-router.put(
-  '/:restaurantId/menu/:menuId/menu-options/',
-  restaurantController.modifyOptions,
-);
+// router.post(
+//   '/:restaurantId/menu/:menuId/addOptions',
+//   restaurantController.addOptions,
+// );
+
+// router.put(
+//   '/:restaurantId/menu/:menuId/menu-options/',
+//   restaurantController.modifyOptions,
+// );
 
 router.post('/assign-tags', restaurantController.assignTags);
 router.put('/change-tags', restaurantController.changeTags);

@@ -23,6 +23,12 @@ module.exports = (sequelize, DataTypes) => {
       ),
       defaultValue: 'IN_CART',
     },
+    customerLatitude: {
+      type: DataTypes.DECIMAL,
+    },
+    customerLongitude: {
+      type: DataTypes.DECIMAL,
+    },
   });
 
   //Restaurant FK may be removed later but we'll see.

@@ -10,15 +10,9 @@ router.post('/addCart', customerController.createCart);
 
 router.post('/cart/:cartId/append-menu', customerController.appendMenu);
 
-router.delete(
-  '/cart/:cartId/delete-menu/:orderMenuId',
-  customerController.removeMenu,
-);
+router.delete('/deleteMenu', customerController.removeMenu);
 
-router.patch(
-  '/cart/:cartId/modify-menu/:orderMenuId',
-  customerController.modifyMenu,
-);
+router.put('/modifyMenu', customerController.modifyMenu);
 
 router.post(
   '/update',
@@ -29,4 +23,13 @@ router.post(
 
 /// test
 router.get('/search/:menuName', customerController.searchByMenu);
+router.get('/cart', customerController.getAllCarts);
+
+// customer address
+router.post('/address', customerController.createAddress);
+
+router.delete('/address/:addressId', customerController.deleteAddress);
+
+router.post('/getMenus', customerController.fetchMenus);
+
 module.exports = router;

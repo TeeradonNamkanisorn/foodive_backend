@@ -5,8 +5,7 @@ const { Driver } = require('../models');
 exports.getMe = async (req, res, next) => {
   try {
     const user = JSON.parse(JSON.stringify(req.user));
-    const driver = await Driver.findByPk(user.id);
-    res.json({ driver });
+    res.json({ user });
   } catch (err) {
     next(err);
   }

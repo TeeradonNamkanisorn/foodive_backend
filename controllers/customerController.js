@@ -5,9 +5,11 @@ const {
   sequelize,
   OrderMenuOption,
   Customer,
+  OrderMenuOptionGroup,
   Menu,
   Restaurant,
   Tag,
+  Address,
 } = require('../models');
 const {
   calculatePriceFromMenuList,
@@ -16,6 +18,65 @@ const {
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
 const { Op } = require('sequelize');
+const getDistanceFromLatLonInKm = require('../services/calcDistance');
+
+// module.exports.createCart = async (req, res, next) => {
+//   const t = await sequelize.transaction();
+//   try {
+//     const { menus, restaurantId } = req.body;
+
+//     const order = await Order.create(
+//       {
+//         customerId: req.user.id,
+//         //driverId later when the restaurant confirms the order
+//         restaurantId,
+//       },
+//       {
+//         transaction: t,
+//       },
+//     );
+
+//     for (let menu of menus) {
+//       const menuId = menu.id;
+//       const menuComment = menu.comment;
+//       const orderMenu = await OrderMenu.create(
+//         { menuId, comment: menuComment, orderId: order.id },
+//         { transaction: t },
+//       );
+
+//       for (let optionGroup of menu.optionGroups) {
+//         for (let option of optionGroup.options) {
+//           await OrderMenuOption.create(
+//             {
+//               orderMenuId: orderMenu.id,
+//               menuOptionId: option.id,
+//             },
+//             { transaction: t },
+//           );
+//         }
+//       }
+//     }
+
+//     const cart = await Order.findOne({
+//       where: {
+//         id: order.id,
+//       },
+//       include: {
+//         model: OrderMenu,
+//         include: {
+//           model: OrderMenuOption,
+//         },
+//       },
+//       transaction: t,
+//     });
+
+//     await t.commit();
+//     res.json({ cart });
+//   } catch (err) {
+//     await t.rollback();
+//     next(err);
+//   }
+// };
 
 module.exports.createCart = async (req, res, next) => {
   const t = await sequelize.transaction();
@@ -42,10 +103,19 @@ module.exports.createCart = async (req, res, next) => {
       );
 
       for (let optionGroup of menu.optionGroups) {
+        const orderOptionGroup = await OrderMenuOptionGroup.create(
+          {
+            orderMenuId: orderMenu.id,
+            menuOptionGroupId: optionGroup.id,
+          },
+          { transaction: t },
+        );
+
         for (let option of optionGroup.options) {
           await OrderMenuOption.create(
             {
               orderMenuId: orderMenu.id,
+              orderMenuOptionGroupId: orderOptionGroup.id,
               menuOptionId: option.id,
             },
             { transaction: t },
@@ -61,7 +131,10 @@ module.exports.createCart = async (req, res, next) => {
       include: {
         model: OrderMenu,
         include: {
-          model: OrderMenuOption,
+          model: OrderMenuOptionGroup,
+          include: {
+            model: OrderMenuOption,
+          },
         },
       },
       transaction: t,
@@ -89,11 +162,20 @@ exports.appendMenu = async (req, res, next) => {
     });
 
     for (let optionGroup of menu.optionGroups) {
+      console.log('asdfasdfas', optionGroup.id);
+      const orderOptionGroup = await OrderMenuOptionGroup.create(
+        {
+          orderMenuId: orderMenu.id,
+          menuOptionGroupId: optionGroup.id,
+        },
+        { transaction: t },
+      );
+
       for (let option of optionGroup.options) {
-        console.log(orderMenu.id, option.id);
         await OrderMenuOption.create(
           {
             orderMenuId: orderMenu.id,
+            orderMenuOptionGroupId: orderOptionGroup.id,
             menuOptionId: option.id,
           },
           { transaction: t },
@@ -115,13 +197,30 @@ exports.appendMenu = async (req, res, next) => {
 exports.removeMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
-    const { orderMenuId } = req.params;
+    const { orderMenuId } = req.body;
 
     const orderMenu = await OrderMenu.findByPk(orderMenuId, { transaction: t });
 
+    const orderMenuOptionGroups = await OrderMenuOptionGroup.findAll({
+      where: {
+        orderMenuId: orderMenu.id,
+      },
+    });
+
+    const optionGroupIds = orderMenuOptionGroups.map((el) => el.id);
+
     await OrderMenuOption.destroy({
       where: {
-        orderMenuId,
+        orderMenuOptionGroupId: {
+          [Op.in]: optionGroupIds,
+        },
+      },
+      transaction: t,
+    });
+
+    await OrderMenuOptionGroup.destroy({
+      where: {
+        orderMenuId: orderMenu.id,
       },
       transaction: t,
     });
@@ -145,8 +244,20 @@ exports.removeMenu = async (req, res, next) => {
 exports.modifyMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
-    const { cartId, orderMenuId } = req.params;
-    const { orderMenuOptions, comment } = req.body;
+    const { newOrderMenuOptionGroups, comment, orderMenuId } = req.body;
+    const orderMenuOptionGroups = await OrderMenuOptionGroup.findAll(
+      {
+        where: {
+          orderMenuId,
+        },
+      },
+      { transaction: t },
+    );
+
+    const orderMenuOptionGroupIds = JSON.parse(
+      JSON.stringify(orderMenuOptionGroups),
+    ).map((el) => el.id);
+
     await OrderMenu.update(
       { comment },
       {
@@ -156,27 +267,71 @@ exports.modifyMenu = async (req, res, next) => {
         transaction: t,
       },
     );
+
     await OrderMenuOption.destroy(
-      { where: { orderMenuId } },
+      {
+        where: {
+          orderMenuOptionGroupId: {
+            [Op.in]: orderMenuOptionGroupIds,
+          },
+        },
+      },
       { transaction: t },
     );
 
-    const newOptions = orderMenuOptions.map((e) => ({
-      orderMenuId: orderMenuId,
-      menuOptionId: e.id,
-    }));
-    await OrderMenuOption.bulkCreate(newOptions, { transaction: t });
+    await OrderMenuOptionGroup.destroy({
+      where: {
+        orderMenuId,
+      },
+      transaction: t,
+    });
+
+    for (let optionGroup of newOrderMenuOptionGroups) {
+      const orderOptionGroup = await OrderMenuOptionGroup.create(
+        {
+          orderMenuId,
+          menuOptionGroupId: optionGroup.id,
+        },
+        { transaction: t },
+      );
+
+      for (let option of optionGroup.options) {
+        await OrderMenuOption.create(
+          {
+            orderMenuId,
+            orderMenuOptionGroupId: orderOptionGroup.id,
+            menuOptionId: option.id,
+          },
+          { transaction: t },
+        );
+      }
+    }
+
+    // await OrderMenuOptionGroup.create({
+    //   orderMenuId,
+    //   menuOptionGroupId
+    // }, {transaction : t})
+
+    // const newOptions = orderMenuOptions.map((e) => ({
+    //   orderMenuId: orderMenuId,
+    //   menuOptionId: e.id,
+    // }));
+    // await OrderMenuOption.bulkCreate(newOptions, { transaction: t });
 
     const orderMenu = await OrderMenu.findOne({
       where: {
         id: orderMenuId,
       },
-      include: OrderMenuOption,
+      include: {
+        model: OrderMenuOptionGroup,
+        include: {
+          model: OrderMenuOption,
+        },
+      },
       transaction: t,
     });
 
-    // await t.commit();
-    await t.rollback();
+    await t.commit();
 
     res.json({ orderMenu });
   } catch (err) {
@@ -187,6 +342,67 @@ exports.modifyMenu = async (req, res, next) => {
 
 exports.fetchMenus = async (req, res, next) => {
   try {
+    const { latitude, longitude, tag } = req.body;
+    let restaurants = await Restaurant.findAll({
+      include: {
+        model: Menu,
+        include: Tag,
+      },
+    });
+
+    console.log(latitude, longitude);
+    restaurants = JSON.parse(JSON.stringify(restaurants));
+
+    restaurants = restaurants.map((restaurant) => {
+      // count the number of matched tags in the restaurant
+      const matches = restaurant.Menus.reduce((sum, menu) => {
+        console.log(menu.Tags);
+        if (menu.Tags.some((curTag) => curTag.name.includes(tag))) {
+          return sum + 1;
+        } else {
+          return sum;
+        }
+      }, 0);
+      console.log('matches: ', matches);
+      const distance = getDistanceFromLatLonInKm(
+        latitude,
+        longitude,
+        restaurant.latitude,
+        restaurant.longitude,
+      );
+
+      const score = matches / (distance + 1) ** 2;
+      return { ...restaurant, distance, matches, score };
+    });
+
+    restaurants.sort((a, b) => b.score - a.score);
+
+    // select one menu from restaurant
+    const menus = restaurants.map((restaurant) => {
+      // will write the algorithm here
+      console.log(restaurant.distance);
+
+      const chosenMenu = restaurant.Menus[0];
+
+      return {
+        id: chosenMenu.id,
+        name: chosenMenu.name,
+        description: chosenMenu.description,
+        price: chosenMenu.price,
+        menuImage: chosenMenu.menuImage,
+        Restaurant: {
+          name: restaurant.name,
+          phoneNumber: restaurant.phoneNumber,
+          status: restaurant.status,
+          image: restaurant.image,
+          distance: restaurant.distance,
+          matches: restaurant.matches,
+          score: restaurant.score,
+        },
+      };
+    });
+
+    res.json({ menus });
   } catch (error) {
     next(error);
   }
@@ -196,8 +412,8 @@ exports.fetchMenus = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = JSON.parse(JSON.stringify(req.user));
-    const customer = await Customer.findByPk(user.id);
-    res.json({ customer });
+
+    res.json({ user });
   } catch (err) {
     next(err);
   }
@@ -261,6 +477,50 @@ exports.searchByMenu = async (req, res, next) => {
     });
 
     await t.commit();
+    res.json({ menu });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+// address
+exports.createAddress = async (req, res, next) => {
+  try {
+    const {
+      addressType,
+      addressCustomer,
+      addressGoogleMap,
+      latitude,
+      longitude,
+      message,
+    } = req.body;
+    const customer = req.user;
+
+    if (!customer) {
+      createError('You are unauthorized.', 400);
+    }
+
+    if (!addressCustomer) {
+      createError('Require customer address.', 400);
+    }
+
+    if (!latitude) {
+      createError('Require latitude.', 400);
+    }
+    if (!longitude) {
+      createError('Require longitude.', 400);
+    }
+
+    const address = await Address.create({
+      addressType: addressType ? addressType : 'OTHER',
+      addressCustomer,
+      addressGoogleMap: addressGoogleMap ? addressGoogleMap : 'Not found',
+      latitude,
+      longitude,
+      customerId: customer.id,
+    });
+
+    res.json({ message: 'Create address success.', address });
   } catch (err) {
     next(err);
   }
@@ -276,14 +536,59 @@ exports.getRestaurantById = async (req, res, next) => {
       where: {
         id: id,
       },
-      transaction: t,
     });
-
-    await t.commit();
 
     res.json({ restaurant });
   } catch (error) {
     await t.rollback();
     next(error);
+  }
+};
+exports.deleteAddress = async (req, res, next) => {
+  try {
+    const customer = req.user;
+    const { addressId } = req.params;
+
+    if (!customer) {
+      createError('You are unauthorized.', 400);
+    }
+
+    const address = await Address.findOne({ where: { id: addressId } });
+
+    if (!address) {
+      createError('Cannot find this address', 400);
+    }
+
+    await address.destroy();
+
+    res.json({
+      message: 'Delete address success.',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAllCarts = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const customerId = req.user.id;
+    const carts = await Order.findAll({
+      where: {
+        customerId,
+        status: 'IN_CART',
+      },
+      include: {
+        model: OrderMenu,
+      },
+      transaction: t,
+    });
+
+    await t.commit();
+
+    res.json({ carts });
+  } catch (err) {
+    await t.rollback();
+    next(err);
   }
 };

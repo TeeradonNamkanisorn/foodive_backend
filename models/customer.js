@@ -17,6 +17,17 @@ module.exports = (sequelize, DataTypes) => {
       gmail: {
         type: DataTypes.STRING,
       },
+      phoneNumber: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false,
+        validate: {
+          is: {
+            args: ['^(0[689]{1})+([0-9]{8})+$', 'g'],
+            msg: 'Phone number format is incorrect',
+          },
+        },
+      },
       password: DataTypes.STRING,
       profileImage: {
         type: DataTypes.STRING,

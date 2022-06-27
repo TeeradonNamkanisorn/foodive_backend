@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     password: DataTypes.STRING,
     //url
-    restaurantIcon: {
+    image: {
       type: DataTypes.STRING,
     },
     phoneNumber: {
