@@ -6,6 +6,13 @@ const { uploadImage } = require('../middlewares/cloudinaryUploads');
 
 router.get('/getMe', restaurantController.getMe);
 
+router.patch(
+  '/update',
+  multer.single('image'),
+  uploadImage,
+  restaurantController.updateRestaurant,
+);
+
 router.post(
   '/:restaurantId/addMenu',
   multer.single('menuImage'),

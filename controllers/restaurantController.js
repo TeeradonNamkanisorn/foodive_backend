@@ -23,6 +23,44 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
+exports.updateRestaurant = async (req, res, next) => {
+  try {
+    // UPDATE : name , image
+    const { name } = req.body;
+    const restaurant = req.user;
+
+    if (!restaurant) {
+      createError('You are unauthorized.', 400);
+    }
+
+    if (!req.imageFile && !name) {
+      createError('Cannot update empty value.', 400);
+    }
+
+    if (name) {
+      restaurant.name = name;
+    }
+
+    // check if image have file image or not.
+    // if have file image then remove image.
+    if (req.imageFile && restaurant.image) {
+      const deletePreviousImage = await destroy(restaurant.imagePublicId);
+      console.log(deletePreviousImage);
+    }
+
+    if (req.imageFile) {
+      restaurant.imagePublicId = req.imageFile.public_id;
+      restaurant.image = req.imageFile.secure_url;
+    }
+
+    await restaurant.save();
+
+    res.json({ message: 'Update profile restaurant success.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.addMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
