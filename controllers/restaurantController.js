@@ -124,7 +124,7 @@ exports.addMenu = async (req, res, next) => {
     if (restaurant.status !== 'close') {
       createError('Restaurant must be closed first before editing');
     }
-    const { name, price, description } = req.body;
+    const { name, price, description, categoryId } = req.body;
     const menuOptionGroups = JSON.parse(req.body.menuOptionGroups);
 
     const { restaurantId } = req.params;
@@ -137,6 +137,18 @@ exports.addMenu = async (req, res, next) => {
     if (!name) createError('Menu name is required', 400);
     if (!menuImage) createError('Menu image is required', 400);
 
+    const restaurantOtherCategory = await Category.findOne(
+      {
+        where: {
+          name: 'other',
+          restaurantId: restaurantId,
+        },
+      },
+      { transaction: t },
+    );
+
+    console.log(categoryId, restaurantOtherCategory.id);
+
     const menu = await Menu.create(
       {
         name,
@@ -145,6 +157,7 @@ exports.addMenu = async (req, res, next) => {
         menuImage,
         menuImagePublicId,
         restaurantId,
+        categoryId: categoryId || restaurantOtherCategory.id,
       },
       { transaction: t },
     );
@@ -178,8 +191,11 @@ exports.addMenu = async (req, res, next) => {
       }
     }
 
+    await t.commit();
+
     res.status(201).json({ menu });
   } catch (err) {
+    await t.rollback();
     next(err);
   } finally {
     clearFolder('./public/images');
@@ -192,6 +208,8 @@ exports.editMenu = async (req, res, next) => {
     const { name, price, description } = req.body;
 
     const menuOptionGroups = JSON.parse(req.body.menuOptionGroups);
+
+    const imageFile = req.imageFile;
 
     const { menuId } = req.params;
     const menuOptionGroupsToBeDeleted = await MenuOptionGroup.findAll({
@@ -212,10 +230,6 @@ exports.editMenu = async (req, res, next) => {
 
     if (menu.restaurantId !== restaurant.id)
       createError('You are unauthorized', 403);
-
-    menu.name = name;
-    menu.price = price;
-    menu.description = description;
 
     let menuImagePublicId;
     let menuImage;
@@ -440,9 +454,10 @@ exports.editMenu = async (req, res, next) => {
 
 exports.addCategory = async (req, res, next) => {
   try {
-    const { restaurantId, menuId, name } = req.body;
+    const { name } = req.body;
+    const restaurantId = req.user.id;
 
-    const category = await Category.create({ restaurantId, menuId, name });
+    const category = await Category.create({ restaurantId, name });
 
     res.json({ category });
   } catch (err) {
@@ -469,8 +484,16 @@ exports.assignCategory = async (req, res, next) => {
 };
 
 exports.deleteCategory = async (req, res, next) => {
+  const t = await sequelize.transaction();
   try {
-    const { categoryId, restaurantId } = req.body;
+    const restaurantId = req.user.id;
+    const { categoryId } = req.params;
+
+    const category = await Category.findByPk(categoryId, { transaction: t });
+
+    if (category.name === 'other')
+      createError('You cannot delete this category');
+
     const menus = await Menu.findAll({
       where: {
         categoryId,

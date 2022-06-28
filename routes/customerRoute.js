@@ -31,6 +31,6 @@ router.post('/address', customerController.createAddress);
 
 router.delete('/address/:addressId', customerController.deleteAddress);
 
-router.post('/getMenus', customerController.fetchMenus);
+router.post('/searchMenus', customerController.fetchMenus);
 
 module.exports = router;

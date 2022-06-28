@@ -5,7 +5,10 @@ const {
   sequelize,
   OrderMenuOption,
   Customer,
+  MenuOption,
+  Category,
   OrderMenuOptionGroup,
+  MenuOptionGroup,
   Menu,
   Restaurant,
   Tag,
@@ -20,64 +23,6 @@ const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
 const { Op } = require('sequelize');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
-
-// module.exports.createCart = async (req, res, next) => {
-//   const t = await sequelize.transaction();
-//   try {
-//     const { menus, restaurantId } = req.body;
-
-//     const order = await Order.create(
-//       {
-//         customerId: req.user.id,
-//         //driverId later when the restaurant confirms the order
-//         restaurantId,
-//       },
-//       {
-//         transaction: t,
-//       },
-//     );
-
-//     for (let menu of menus) {
-//       const menuId = menu.id;
-//       const menuComment = menu.comment;
-//       const orderMenu = await OrderMenu.create(
-//         { menuId, comment: menuComment, orderId: order.id },
-//         { transaction: t },
-//       );
-
-//       for (let optionGroup of menu.optionGroups) {
-//         for (let option of optionGroup.options) {
-//           await OrderMenuOption.create(
-//             {
-//               orderMenuId: orderMenu.id,
-//               menuOptionId: option.id,
-//             },
-//             { transaction: t },
-//           );
-//         }
-//       }
-//     }
-
-//     const cart = await Order.findOne({
-//       where: {
-//         id: order.id,
-//       },
-//       include: {
-//         model: OrderMenu,
-//         include: {
-//           model: OrderMenuOption,
-//         },
-//       },
-//       transaction: t,
-//     });
-
-//     await t.commit();
-//     res.json({ cart });
-//   } catch (err) {
-//     await t.rollback();
-//     next(err);
-//   }
-// };
 
 module.exports.createCart = async (req, res, next) => {
   const t = await sequelize.transaction();
@@ -348,7 +293,10 @@ exports.fetchMenus = async (req, res, next) => {
     let restaurants = await Restaurant.findAll({
       include: {
         model: Menu,
-        include: Tag,
+        include: {
+          model: Tag,
+          attributes: ['id', 'name'],
+        },
       },
     });
 
@@ -356,25 +304,22 @@ exports.fetchMenus = async (req, res, next) => {
     restaurants = JSON.parse(JSON.stringify(restaurants));
 
     restaurants = restaurants.map((restaurant) => {
-      // count the number of matched tags in the restaurant
-      // const matches = restaurant.Menus.reduce((sum, menu) => {
-      //   console.log(menu.Tags);
-      //   if (menu.Tags.some((curTag) => curTag.name.includes(tag))) {
-      //     return sum + 1;
-      //   } else {
-      //     return sum;
-      //   }
-      // }, 0);
       const matchedMenus = restaurant.Menus.filter((menu) => {
         // if part of the tags' string match the input tag
-        return (
-          menu.Tags.some((curTag) => curTag.name.includes(tag)) ||
-          (keyword && menu.name.includes(keyword))
-        );
+        if (!tag && keyword) return menu.name.includes(keyword);
+        if (tag && !keyword) {
+          return menu.Tags.some((curTag) => curTag.name.includes(tag));
+        }
+        if (!tag && !keyword) return true;
+        if (tag && keyword) {
+          return (
+            menu.Tags.some((curTag) => curTag.name.includes(tag)) ||
+            menu.name.includes(keyword)
+          );
+        }
       });
       const matches = matchedMenus.length;
 
-      console.log('matches: ', matches);
       const distance = getDistanceFromLatLonInKm(
         latitude,
         longitude,
@@ -387,11 +332,12 @@ exports.fetchMenus = async (req, res, next) => {
     });
 
     restaurants.sort((a, b) => b.score - a.score);
+    console.log(restaurants);
 
     // select one menu from restaurant
     let menus = restaurants.map((restaurant) => {
       // will write the algorithm here
-      console.log(restaurant);
+
       const chosenMenu = restaurant.Menus[0];
 
       return chosenMenu
@@ -399,6 +345,7 @@ exports.fetchMenus = async (req, res, next) => {
             id: chosenMenu.id,
             name: chosenMenu.name,
             description: chosenMenu.description,
+            tags: chosenMenu.Tags,
             price: chosenMenu.price,
             menuImage: chosenMenu.menuImage,
             Restaurant: {
@@ -413,6 +360,7 @@ exports.fetchMenus = async (req, res, next) => {
           }
         : null;
     });
+    console.log(menus);
     menus = menus.filter((menu) => Boolean(menu));
     res.json({ menus });
   } catch (error) {
@@ -539,20 +487,26 @@ exports.createAddress = async (req, res, next) => {
 };
 
 exports.getRestaurantById = async (req, res, next) => {
-  const t = await sequelize.transaction();
-
   try {
     const { id } = req.params;
 
-    const restaurant = await Restaurant.findAll({
-      where: {
-        id: id,
+    const restaurant = await Restaurant.findByPk(id, {
+      include: {
+        model: Category,
+        include: {
+          model: Menu,
+          include: {
+            model: MenuOptionGroup,
+            include: {
+              model: MenuOption,
+            },
+          },
+        },
       },
     });
 
     res.json({ restaurant });
   } catch (error) {
-    await t.rollback();
     next(error);
   }
 };
@@ -630,3 +584,9 @@ exports.getCart = async (req, res, next) => {
     next(err);
   }
 };
+
+//
+//0
+//setCount(prev => prev+1)
+//setCount(prev => prev+1)
+//2

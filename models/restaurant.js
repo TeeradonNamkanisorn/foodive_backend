@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Restaurant.associate = ({ Menu, Order }) => {
+  Restaurant.associate = ({ Menu, Order, Category }) => {
     Restaurant.hasMany(Menu, {
       allowNull: false,
       onDelete: 'RESTRICT',
@@ -43,6 +43,14 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Restaurant.hasMany(Order, {
+      foreignKey: {
+        name: 'restaurantId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    Restaurant.hasMany(Category, {
       foreignKey: {
         name: 'restaurantId',
       },
