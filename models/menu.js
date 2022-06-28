@@ -28,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     MenuTag,
     MenuOptionGroup,
     OrderMenu,
+    Category,
   }) => {
     Menu.belongsTo(Restaurant, {
       allowNull: false,

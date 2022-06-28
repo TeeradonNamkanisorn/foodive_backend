@@ -70,3 +70,7 @@ module.exports = (sequelize, DataTypes) => {
 
   return Order;
 };
+
+//
+
+//{id: {productId: id, price}}

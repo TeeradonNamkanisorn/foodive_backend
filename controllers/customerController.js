@@ -14,6 +14,7 @@ const {
 const {
   calculatePriceFromMenuList,
   getCartMenuArrayWithoutOptions,
+  getFullCart,
 } = require('../services/cartServices');
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
@@ -340,9 +341,10 @@ exports.modifyMenu = async (req, res, next) => {
   }
 };
 
+//
 exports.fetchMenus = async (req, res, next) => {
   try {
-    const { latitude, longitude, tag } = req.body;
+    const { latitude, longitude, tag, keyword } = req.body;
     let restaurants = await Restaurant.findAll({
       include: {
         model: Menu,
@@ -355,14 +357,23 @@ exports.fetchMenus = async (req, res, next) => {
 
     restaurants = restaurants.map((restaurant) => {
       // count the number of matched tags in the restaurant
-      const matches = restaurant.Menus.reduce((sum, menu) => {
-        console.log(menu.Tags);
-        if (menu.Tags.some((curTag) => curTag.name.includes(tag))) {
-          return sum + 1;
-        } else {
-          return sum;
-        }
-      }, 0);
+      // const matches = restaurant.Menus.reduce((sum, menu) => {
+      //   console.log(menu.Tags);
+      //   if (menu.Tags.some((curTag) => curTag.name.includes(tag))) {
+      //     return sum + 1;
+      //   } else {
+      //     return sum;
+      //   }
+      // }, 0);
+      const matchedMenus = restaurant.Menus.filter((menu) => {
+        // if part of the tags' string match the input tag
+        return (
+          menu.Tags.some((curTag) => curTag.name.includes(tag)) ||
+          (keyword && menu.name.includes(keyword))
+        );
+      });
+      const matches = matchedMenus.length;
+
       console.log('matches: ', matches);
       const distance = getDistanceFromLatLonInKm(
         latitude,
@@ -372,36 +383,37 @@ exports.fetchMenus = async (req, res, next) => {
       );
 
       const score = matches / (distance + 1) ** 2;
-      return { ...restaurant, distance, matches, score };
+      return { ...restaurant, Menus: matchedMenus, distance, matches, score };
     });
 
     restaurants.sort((a, b) => b.score - a.score);
 
     // select one menu from restaurant
-    const menus = restaurants.map((restaurant) => {
+    let menus = restaurants.map((restaurant) => {
       // will write the algorithm here
-      console.log(restaurant.distance);
-
+      console.log(restaurant);
       const chosenMenu = restaurant.Menus[0];
 
-      return {
-        id: chosenMenu.id,
-        name: chosenMenu.name,
-        description: chosenMenu.description,
-        price: chosenMenu.price,
-        menuImage: chosenMenu.menuImage,
-        Restaurant: {
-          name: restaurant.name,
-          phoneNumber: restaurant.phoneNumber,
-          status: restaurant.status,
-          image: restaurant.image,
-          distance: restaurant.distance,
-          matches: restaurant.matches,
-          score: restaurant.score,
-        },
-      };
+      return chosenMenu
+        ? {
+            id: chosenMenu.id,
+            name: chosenMenu.name,
+            description: chosenMenu.description,
+            price: chosenMenu.price,
+            menuImage: chosenMenu.menuImage,
+            Restaurant: {
+              name: restaurant.name,
+              phoneNumber: restaurant.phoneNumber,
+              status: restaurant.status,
+              image: restaurant.image,
+              distance: restaurant.distance,
+              matches: restaurant.matches,
+              score: restaurant.score,
+            },
+          }
+        : null;
     });
-
+    menus = menus.filter((menu) => Boolean(menu));
     res.json({ menus });
   } catch (error) {
     next(error);
@@ -589,6 +601,32 @@ exports.getAllCarts = async (req, res, next) => {
     res.json({ carts });
   } catch (err) {
     await t.rollback();
+    next(err);
+  }
+};
+
+exports.getCart = async (req, res, next) => {
+  try {
+    const { cartId } = req.params;
+    const cart = await Order.findByPk(cartId, {
+      include: {
+        model: OrderMenu,
+        include: {
+          model: OrderMenuOptionGroup,
+          include: {
+            model: OrderMenuOption,
+          },
+        },
+      },
+    });
+
+    let cartSurface = await Order.findByPk(cartId);
+    cartSurface = JSON.parse(JSON.stringify(cartSurface));
+
+    const cartItems = await getFullCart(JSON.parse(JSON.stringify(cart)));
+
+    res.json({ ...cartSurface, cartItems });
+  } catch (err) {
     next(err);
   }
 };

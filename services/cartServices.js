@@ -61,62 +61,119 @@ const optionGroupList = async () => {
 
   return menuOptionGroupsObj;
 };
-// exports.getCartMenuOptionsArray = async (menus, restaurantId)
 
-//********* เขียนไว้เฉยๆยังไม่ได้ทดสอบ ************/
-// const getDetailedCart = async (idOnlyList, restaurantId) => {
-//     const optionPrices = await menuList(restaurantId);
-//     const menuPrices = await menuOption(restaurantId);
-
-//     const list = [];
-//     for (let i = 0; i < idOnlyList.length; i++) {
-
-//         const idOnlyMenu = idOnlyList[i];
-//         const menu = {};
-
-//         menu.price = menuPrices[currentMenu.id].price;
-//         menu.name = menuPrices[currentMenu.id].name;
-//         menu.menuOption = []
-
-//         for (let j = 0; j < idOnlyMenu.menuOptions.length; j++) {
-//             const idOnlyMenuOption = idOnlyMenu.menuOptions[j];
-//             const menuOption = {}
-//             menuOption.name = optionPrices[idOnlyMenuOption.id].name;
-//             menuOption.id = optionPrices[idOnlyMenuOption.id].id;
-//             menuOption.price = optionPrices[idOnlyMenuOption.id].price;
-
-//             menu.menuOption.push(menuOption)
-//         }
-
-//         list.push(menu);
+//{
+//     "cart": {
+//         "id": 3,
+//         "price": null,
+//         "deliveryFee": 0,
+//         "distance": null,
+//         "status": "IN_CART",
+//         "customerLatitude": null,
+//         "customerLongitude": null,
+//         "createdAt": "2022-06-27T07:14:22.000Z",
+//         "updatedAt": "2022-06-27T07:14:22.000Z",
+//         "customerId": 1,
+//         "orderId": null,
+//         "driverId": null,
+//         "restaurantId": 1,
+//         "OrderMenus": [
+//             {
+//                 "id": 3,
+//                 "price": null,
+//                 "name": null,
+//                 "comment": null,
+//                 "createdAt": "2022-06-27T07:14:22.000Z",
+//                 "updatedAt": "2022-06-27T07:14:22.000Z",
+//                 "menuId": 1,
+//                 "orderId": 3,
+//                 "OrderMenuOptionGroups": [
+//                     {
+//                         "id": 1,
+//                         "orderMenuId": 3,
+//                         "createdAt": "2022-06-27T07:14:22.000Z",
+//                         "updatedAt": "2022-06-27T07:14:22.000Z",
+//                         "menuOptionGroupId": 1,
+//                         "OrderMenuOptions": [
+//                             {
+//                                 "id": 1,
+//                                 "createdAt": "2022-06-27T07:14:22.000Z",
+//                                 "updatedAt": "2022-06-27T07:14:22.000Z",
+//                                 "menuOptionId": 1,
+//                                 "orderMenuOptionGroupId": 1
+//                             }
+//                         ]
+//                     }
+//                 ]
+//             },
+//             {
+//                 "id": 8,
+//                 "price": null,
+//                 "name": null,
+//                 "comment": "no sauce",
+//                 "createdAt": "2022-06-27T07:33:28.000Z",
+//                 "updatedAt": "2022-06-27T07:33:28.000Z",
+//                 "menuId": 2,
+//                 "orderId": 3,
+//                 "OrderMenuOptionGroups": []
+//             },
+//             {
+//                 "id": 9,
+//                 "price": null,
+//                 "name": null,
+//                 "comment": "no sauce",
+//                 "createdAt": "2022-06-27T07:34:32.000Z",
+//                 "updatedAt": "2022-06-27T07:34:32.000Z",
+//                 "menuId": 2,
+//                 "orderId": 3,
+//                 "OrderMenuOptionGroups": [
+//                     {
+//                         "id": 13,
+//                         "orderMenuId": 9,
+//                         "createdAt": "2022-06-27T11:40:57.000Z",
+//                         "updatedAt": "2022-06-27T11:40:57.000Z",
+//                         "menuOptionGroupId": 3,
+//                         "OrderMenuOptions": [
+//                             {
+//                                 "id": 11,
+//                                 "createdAt": "2022-06-27T11:40:57.000Z",
+//                                 "updatedAt": "2022-06-27T11:40:57.000Z",
+//                                 "menuOptionId": 8,
+//                                 "orderMenuOptionGroupId": 13
+//                             }
+//                         ]
+//                     }
+//                 ]
+//             }
+//         ]
 //     }
-
-//     return list
 // }
 
-const getFullCart = async (menuIdsOnly, restaurantId) => {
+const getFullCart = async ({ OrderMenus }, restaurantId) => {
   const allMenuList = await menuList();
   const allMenuOptionGroups = await optionGroupList();
   const allMenuOptions = await optionList();
   let totalPrice = 0;
 
-  const full = menuIdsOnly.map((menuIdItem) => {
+  const full = OrderMenus.map((menuIdItem) => {
     totalPrice += +allMenuList[menuIdItem.menuId].price;
     return {
       name: allMenuList[menuIdItem.menuId].name,
       price: allMenuList[menuIdItem.menuId].price,
-      optionGroups: menuIdItem.optionGroups.map((optionGroup) => {
-        return {
-          name: allMenuOptionGroups[optionGroup.menuOptionGroupId].name,
-          options: optionGroup.options.map((option) => {
-            totalPrice += +allMenuOptions[option.menuOptionId].price;
-            return {
-              name: allMenuOptions[option.menuOptionId].name,
-              price: allMenuOptions[option.menuOptionId].price,
-            };
-          }),
-        };
-      }),
+      OrderMenuOptionGroups: menuIdItem.OrderMenuOptionGroups.map(
+        (optionGroup) => {
+          return {
+            name: allMenuOptionGroups[optionGroup.menuOptionGroupId].name,
+            options: optionGroup.OrderMenuOptions.map((option) => {
+              totalPrice += +allMenuOptions[option.menuOptionId].price;
+              return {
+                name: allMenuOptions[option.menuOptionId].name,
+                price: allMenuOptions[option.menuOptionId].price,
+              };
+            }),
+          };
+        },
+      ),
     };
   });
 
@@ -124,47 +181,3 @@ const getFullCart = async (menuIdsOnly, restaurantId) => {
 };
 
 module.exports = { getFullCart };
-
-// const optionGroups1 = [
-//   {
-//     menuOptionGroupId: 1,
-//     options: [
-//       {
-//         optionGroupId: 1,
-//         menuOptionId: 1,
-//       },
-//       {
-//         optionGroupId: 2,
-//         menuOptionId: 3,
-//       },
-//     ],
-//   },
-//   {
-//     menuOptionGroupId: 2,
-//     options: [
-//       {
-//         optionGroupId: 2,
-//         menuOptionId: 5,
-//       },
-//     ],
-//   },
-// ];
-
-// const optionGroups2 = [
-//   {
-//     menuOptionGroupId: 3,
-//     options: [
-//       {
-//         optionGroupId: 3,
-//         menuOptionId: 7,
-//       },
-//     ],
-//   },
-// ];
-
-// const menu = [
-//   { menuId: 1, optionGroups: optionGroups1 },
-//   { menuId: 2, optionGroups: optionGroups2 },
-// ];
-
-// getFullCart(menu).then((data) => console.log(data.totalPrice));

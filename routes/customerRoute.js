@@ -23,7 +23,8 @@ router.post(
 
 /// test
 router.get('/search/:menuName', customerController.searchByMenu);
-router.get('/cart', customerController.getAllCarts);
+router.get('/cart/:cartId', customerController.getCart);
+router.get('/carts', customerController.getAllCarts);
 
 // customer address
 router.post('/address', customerController.createAddress);

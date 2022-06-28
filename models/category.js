@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   });
-  Category.associate = (Menu) => {
+
+  Category.associate = ({ Menu }) => {
     Category.belongsTo(Menu, {
       allowNull: false,
       onDelete: 'RESTRICT',
