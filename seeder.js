@@ -9,7 +9,98 @@ const {
   sequelize,
   MenuTag,
   Category,
+  Order,
+  OrderMenu,
+  OrderMenuOption,
+  OrderMenuOptionGroup,
 } = require('./models');
+
+const order = [
+  {
+    price: '22',
+    deliveryFee: '10',
+    distance: '10',
+    status: 'DELIVERY_PENDING',
+    customerLatitude: '100',
+    customerLongitude: '100',
+    addressName: 'home',
+    customerId: '1',
+    driverId: '1',
+    restaurantId: '1',
+  },
+  {
+    price: null,
+    deliveryFee: '10',
+    distance: '10',
+    status: 'IN_CART',
+    customerLatitude: '100',
+    customerLongitude: '300',
+    addressName: 'home',
+    customerId: '2',
+    driverId: '2',
+    restaurantId: '2',
+  },
+];
+
+const orderMenu = [
+  {
+    price: 10.0,
+    name: 'pad thai',
+    comment: 'comment pad thai',
+    orderId: '1',
+    menuId: '1',
+  },
+  {
+    price: 12.0,
+    name: 'thai green curry',
+    comment: 'comment thai green curry',
+    orderId: '1',
+    menuId: '3',
+  },
+  {
+    // price: null,
+    // name: null,
+    comment: 'comment croissant',
+    orderId: '2',
+    menuId: '4',
+  },
+  {
+    // price: null,
+    // name: null,
+    comment: 'comment Andre',
+    orderId: '2',
+    menuId: '5',
+  },
+];
+const orderMenuOptionGroup = [
+  {
+    orderMenuId: '1',
+    menuOptionGroupId: '1',
+  },
+  {
+    orderMenuId: '3',
+    menuOptionGroupId: '2',
+  },
+];
+
+const orderMenuOption = [
+  {
+    orderMenuOptionGroupId: '1',
+    menuOptionId: '1',
+  },
+  {
+    orderMenuOptionGroupId: '1',
+    menuOptionId: '2',
+  },
+  {
+    orderMenuOptionGroupId: '2',
+    menuOptionId: '4',
+  },
+  {
+    orderMenuOptionGroupId: '2',
+    menuOptionId: '5',
+  },
+];
 
 const foodTags = [
   'sweet',
@@ -338,6 +429,12 @@ const seed = async () => {
     await MenuOptionGroup.bulkCreate(menuOptionGroups, { transaction: t });
     await MenuOption.bulkCreate(menuOptions, { transaction: t });
     await MenuTag.bulkCreate(menuTags, { transaction: t });
+    await Order.bulkCreate(order, { transaction: t });
+    await OrderMenu.bulkCreate(orderMenu, { transaction: t });
+    await OrderMenuOption.bulkCreate(orderMenuOption, { transaction: t });
+    await OrderMenuOptionGroup.bulkCreate(orderMenuOptionGroup, {
+      transaction: t,
+    });
     await t.commit();
   } catch (err) {
     await t.rollback();

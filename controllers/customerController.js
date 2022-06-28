@@ -473,28 +473,30 @@ exports.updateProfile = async (req, res, next) => {
 };
 
 /// test
-exports.searchByMenu = async (req, res, next) => {
-  const t = await sequelize.transaction();
-  try {
-    const { menuName } = req.params;
-    console.log('');
-    const menu = await Menu.findAll({
-      where: {
-        name: menuName,
-      },
-      include: {
-        model: Restaurant,
-      },
-      transaction: t,
-    });
+// exports.searchByMenu = async (req, res, next) => {
+//   const t = await sequelize.transaction();
+//   try {
+//     const { menuName } = req.params;
+//     console.log('');
+//     const menu = await Menu.findAll({
+//       where: {
+//         name: {
+//           [Op.like]: `%${menuName}%`,
+//         },
+//       },
+//       include: {
+//         model: Restaurant,
+//       },
+//       transaction: t,
+//     });
 
-    await t.commit();
-    res.json({ menu });
-  } catch (err) {
-    await t.rollback();
-    next(err);
-  }
-};
+//     await t.commit();
+//     res.json({ menu });
+//   } catch (err) {
+//     await t.rollback();
+//     next(err);
+//   }
+// };
 // address
 exports.createAddress = async (req, res, next) => {
   try {

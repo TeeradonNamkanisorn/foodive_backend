@@ -22,7 +22,7 @@ router.post(
 );
 
 /// test
-router.get('/search/:menuName', customerController.searchByMenu);
+// router.get('/search/:menuName', customerController.searchByMenu);
 router.get('/cart/:cartId', customerController.getCart);
 router.get('/carts', customerController.getAllCarts);
 
@@ -31,6 +31,6 @@ router.post('/address', customerController.createAddress);
 
 router.delete('/address/:addressId', customerController.deleteAddress);
 
-router.post('/getMenus', customerController.fetchMenus);
+router.post('/searchMenus', customerController.fetchMenus);
 
 module.exports = router;

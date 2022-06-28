@@ -29,6 +29,9 @@ module.exports = (sequelize, DataTypes) => {
     customerLongitude: {
       type: DataTypes.DECIMAL,
     },
+    addressName: {
+      type: DataTypes.STRING,
+    },
   });
 
   //Restaurant FK may be removed later but we'll see.
