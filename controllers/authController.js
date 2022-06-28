@@ -21,15 +21,7 @@ const genToken = (payload) =>
 exports.registerRestaurant = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
-    const {
-      name,
-      latitude,
-      longitude,
-      email,
-      password,
-      phoneNumber,
-      confirmPassword,
-    } = req.body;
+    const { name, email, password, phoneNumber, confirmPassword } = req.body;
 
     if (password !== confirmPassword) createError('invalid credentials', 400);
 

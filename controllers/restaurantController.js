@@ -68,6 +68,12 @@ exports.updateStatusRes = async (req, res, next) => {
     const { status } = req.body;
     const restaurant = req.user;
 
+    console.log(status);
+
+    if (status !== 'open' && status !== 'close') {
+      createError('Status must be "open" or "close"', 400);
+    }
+
     if (restaurant.status === status) {
       createError(
         'New status is equal current status. Please change value of new status. ',
@@ -81,7 +87,31 @@ exports.updateStatusRes = async (req, res, next) => {
 
     await restaurant.save();
 
-    res.json({ message: 'Change status restaurant to' + status });
+    console.log(restaurant.status);
+
+    res.json({ message: 'Change status restaurant success.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateAddressRes = async (req, res, next) => {
+  try {
+    const { longitude, latitude } = req.body;
+    const restaurant = req.user;
+
+    if (!latitude && !longitude) {
+      createError('Address is required', 400);
+    }
+
+    if ((longitude, latitude)) {
+      restaurant.longitude = longitude;
+      restaurant.latitude = latitude;
+    }
+
+    await restaurant.save();
+
+    res.json({ message: 'Update store location is success' });
   } catch (err) {
     next(err);
   }

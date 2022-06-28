@@ -14,7 +14,8 @@ router.patch(
 );
 
 router.patch('/updateStatus', restaurantController.updateStatusRes);
-// router.patch("/updateStatus",restaurantController.updateAddressRes)
+
+router.patch('/updateAddress', restaurantController.updateAddressRes);
 
 router.post(
   '/:restaurantId/addMenu',
