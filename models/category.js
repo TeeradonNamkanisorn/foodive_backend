@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     //base price; options' prices not included.
-    RestaurantID: {
+    restaurantId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },

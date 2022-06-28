@@ -1,4 +1,11 @@
-const { Restaurant, Customer, Driver, Tag } = require('../models');
+const {
+  Restaurant,
+  Customer,
+  Driver,
+  Tag,
+  Category,
+  sequelize,
+} = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const createError = require('../services/createError');
@@ -12,6 +19,7 @@ const genToken = (payload) =>
 
 //Only for register with email/password
 exports.registerRestaurant = async (req, res, next) => {
+  const t = await sequelize.transaction();
   try {
     const {
       name,
@@ -29,17 +37,27 @@ exports.registerRestaurant = async (req, res, next) => {
 
     const token = genToken({ email, role: 'restaurant' });
 
-    await Restaurant.create({
-      name,
-      latitude,
-      longitude,
-      email,
-      password: hashedPw,
-      phoneNumber,
-    });
+    const restaurant = await Restaurant.create(
+      {
+        name,
+        latitude,
+        longitude,
+        email,
+        password: hashedPw,
+        phoneNumber,
+      },
+      { transaction: t },
+    );
 
+    console.log(restaurant.id);
+    await Category.create(
+      { name: 'other', restaurantId: restaurant.id },
+      { transaction: t },
+    );
+    await t.commit();
     res.status(201).json({ message: 'sign up success', token });
   } catch (err) {
+    await t.rollback();
     next(err);
   }
 };

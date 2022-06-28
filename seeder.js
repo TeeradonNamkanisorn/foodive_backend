@@ -8,6 +8,7 @@ const {
   MenuOptionGroup,
   sequelize,
   MenuTag,
+  Category,
 } = require('./models');
 
 const foodTags = [
@@ -90,6 +91,9 @@ const restaurants = [
     phoneNumber: '0822225555',
     latitude: 100,
     longitude: 100,
+    image:
+      'https://a.cdn-hotels.com/gdcs/production1/d32/f93e1d15-b49b-4699-8904-06f8074f0f35.jpg',
+    imagePublicId: 'none',
   },
   {
     email: 'frenchRestaurant@gmail.com',
@@ -98,6 +102,9 @@ const restaurants = [
     phoneNumber: '0822224444',
     latitude: 101,
     longitude: 100,
+    image:
+      'https://cdn.vox-cdn.com/thumbor/EKrsctH4FQDbuUKic89L3tiWULc=/0x0:1700x960/1200x800/filters:focal(714x344:986x616)/cdn.vox-cdn.com/uploads/chorus_image/image/69525497/restaurant_01_6b56e1a4.0.jpg',
+    imagePublicId: 'none',
   },
   {
     email: 'chineseRestaurant@gmail.com',
@@ -106,6 +113,9 @@ const restaurants = [
     phoneNumber: '0822224444',
     latitude: 101,
     longitude: 101,
+    image:
+      'https://media-cdn.tripadvisor.com/media/photo-s/07/06/10/f7/ming-palace-chinese-restaurant.jpg',
+    imagePublicId: 'none',
   },
 ];
 
@@ -118,6 +128,7 @@ const menus = [
     menuImagePublicId: 'none',
     description: 'best thai food',
     restaurantId: 1,
+    categoryId: 1,
   },
   {
     name: 'thai tea',
@@ -127,6 +138,7 @@ const menus = [
     menuImagePublicId: 'none',
     description: 'best thai food',
     restaurantId: 1,
+    categoryId: 1,
   },
   {
     name: 'thai green curry',
@@ -136,6 +148,7 @@ const menus = [
     menuImagePublicId: 'none',
     description: 'tranditional thai food',
     restaurantId: 1,
+    categoryId: 1,
   },
   {
     name: 'croissant',
@@ -145,6 +158,7 @@ const menus = [
     menuImagePublicId: 'none',
     description: 'french croissant',
     restaurantId: 2,
+    categoryId: 2,
   },
   {
     name: 'Andre',
@@ -154,6 +168,7 @@ const menus = [
     menuImagePublicId: 'none',
     description: 'andre',
     restaurantId: 2,
+    categoryId: 2,
   },
   {
     name: 'Flamiche',
@@ -163,6 +178,7 @@ const menus = [
     menuImagePublicId: 'none',
     description: 'flamiche',
     restaurantId: 2,
+    categoryId: 2,
   },
   {
     name: 'Peking Roasted Duck',
@@ -172,6 +188,7 @@ const menus = [
     menuImagePublicId: 'none',
     description: 'most well-known chinese cuisine',
     restaurantId: 3,
+    categoryId: 3,
   },
   {
     name: 'Kung Pao Chicken',
@@ -182,6 +199,7 @@ const menus = [
       'Kung Pao is made with chicken, vegetables, nuts, and Szechuan peppers. Szechuan: Szechuan cuisine typically uses Szechuan peppers, vegetables, mushrooms, herbs, pork, beef, rabbit, and yogurt.',
     menuImagePublicId: 'none',
     restaurantId: 3,
+    categoryId: 3,
   },
   {
     name: 'Chineses Dumplings',
@@ -191,6 +209,7 @@ const menus = [
     description: 'dumplings',
     menuImagePublicId: 'none',
     restaurantId: 3,
+    categoryId: 3,
   },
 ];
 
@@ -289,10 +308,26 @@ const menuTags = [
   },
 ];
 
+const categories = [
+  {
+    name: 'other',
+    restaurantId: 1,
+  },
+  {
+    name: 'other',
+    restaurantId: 2,
+  },
+  {
+    name: 'other',
+    restaurantId: 3,
+  },
+];
+
 const seed = async () => {
   const t = await sequelize.transaction();
   try {
     await Customer.bulkCreate(customers, { transaction: t });
+    await Category.bulkCreate(categories, { transaction: t });
     await Restaurant.bulkCreate(restaurants, { transaction: t });
     await Driver.bulkCreate(drivers, { transaction: t });
     await Tag.bulkCreate(
