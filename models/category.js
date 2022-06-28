@@ -12,13 +12,13 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Category.associate = ({ Menu }) => {
-    Category.belongsTo(Menu, {
+    Category.hasMany(Menu, {
       allowNull: false,
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
       foreignKey: {
-        name: 'menuId',
-        allowNull: false,
+        name: 'categoryId',
+        // allowNull: false,
       },
     });
   };

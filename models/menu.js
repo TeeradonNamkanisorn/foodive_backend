@@ -68,10 +68,9 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    Menu.hasMany(Category, {
+    Menu.belongsTo(Category, {
       foreignKey: {
-        name: 'menuId',
-        allowNull: false,
+        name: 'categoryId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',

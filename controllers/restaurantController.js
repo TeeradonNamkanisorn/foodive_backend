@@ -5,6 +5,7 @@ const {
   MenuOptionGroup,
   MenuTag,
   Driver,
+  Category,
   Restaurant,
 } = require('../models');
 const { Op } = require('sequelize');
@@ -381,6 +382,78 @@ exports.editMenu = async (req, res, next) => {
 //     next(error);
 //   }
 // };
+
+exports.addCategory = async (req, res, next) => {
+  try {
+    const { restaurantId, menuId, name } = req.body;
+
+    const category = await Category.create({ restaurantId, menuId, name });
+
+    res.json({ category });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.assignCategory = async (req, res, next) => {
+  try {
+    const { menuId, categoryId } = req.body;
+    await Menu.update(
+      { categoryId },
+      {
+        where: {
+          id: menuId,
+        },
+      },
+    );
+
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteCategory = async (req, res, next) => {
+  try {
+    const { categoryId, restaurantId } = req.body;
+    const menus = await Menu.findAll({
+      where: {
+        categoryId,
+      },
+    });
+
+    const menuIds = JSON.parse(JSON.stringify(menus)).map((menu) => menu.id);
+    const otherCategory = await Category.findOne({
+      where: {
+        name: 'other',
+        restaurantId,
+      },
+    });
+
+    await Menu.update(
+      {
+        categoryId: otherCategory.id,
+      },
+      {
+        where: {
+          id: {
+            [Op.in]: menuIds,
+          },
+        },
+      },
+    );
+
+    await Category.destroy({
+      where: {
+        id: categoryId,
+      },
+    });
+
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+};
 
 exports.assignTags = async (req, res, next) => {
   try {
