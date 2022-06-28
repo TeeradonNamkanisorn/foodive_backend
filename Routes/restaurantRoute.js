@@ -13,6 +13,9 @@ router.patch(
   restaurantController.updateRestaurant,
 );
 
+router.patch('/updateStatus', restaurantController.updateStatusRes);
+// router.patch("/updateStatus",restaurantController.updateAddressRes)
+
 router.post(
   '/:restaurantId/addMenu',
   multer.single('menuImage'),

@@ -62,6 +62,31 @@ exports.updateRestaurant = async (req, res, next) => {
   }
 };
 
+exports.updateStatusRes = async (req, res, next) => {
+  try {
+    // ENUM('open', 'close')
+    const { status } = req.body;
+    const restaurant = req.user;
+
+    if (restaurant.status === status) {
+      createError(
+        'New status is equal current status. Please change value of new status. ',
+        400,
+      );
+    }
+
+    if (status) {
+      restaurant.status = status;
+    }
+
+    await restaurant.save();
+
+    res.json({ message: 'Change status restaurant to' + status });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.addMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
