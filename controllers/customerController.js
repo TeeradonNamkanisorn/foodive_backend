@@ -584,9 +584,3 @@ exports.getCart = async (req, res, next) => {
     next(err);
   }
 };
-
-//
-//0
-//setCount(prev => prev+1)
-//setCount(prev => prev+1)
-//2
