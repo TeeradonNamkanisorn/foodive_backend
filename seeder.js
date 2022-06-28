@@ -106,6 +106,8 @@ const restaurants = [
     phoneNumber: '0822224444',
     latitude: 101,
     longitude: 101,
+
+    // TODO : image , imagePublicId
   },
 ];
 

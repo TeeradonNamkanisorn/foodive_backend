@@ -13,15 +13,7 @@ const genToken = (payload) =>
 //Only for register with email/password
 exports.registerRestaurant = async (req, res, next) => {
   try {
-    const {
-      name,
-      latitude,
-      longitude,
-      email,
-      password,
-      phoneNumber,
-      confirmPassword,
-    } = req.body;
+    const { name, email, password, phoneNumber, confirmPassword } = req.body;
 
     if (password !== confirmPassword) createError('invalid credentials', 400);
 
@@ -31,8 +23,6 @@ exports.registerRestaurant = async (req, res, next) => {
 
     await Restaurant.create({
       name,
-      latitude,
-      longitude,
       email,
       password: hashedPw,
       phoneNumber,
