@@ -124,8 +124,19 @@ exports.searchOrder = async (req, res, next) => {
     });
     await t.commit();
     parseorder = JSON.parse(JSON.stringify(order));
+    let orderArr = [];
+    parseorder.forEach((element) => {
+      getDistanceFromLatLonInKm(
+        10,
+        20,
+        element.Restaurant.latitude,
+        element.Restaurant.longitude,
+      ) <= 10
+        ? orderArr.push(element)
+        : '';
+    });
 
-    res.json({ order: parseorder });
+    res.json({ order: orderArr });
   } catch (err) {
     await t.rollback();
     next(err);
