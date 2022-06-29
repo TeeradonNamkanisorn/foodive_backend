@@ -551,7 +551,7 @@ exports.getAllCarts = async (req, res, next) => {
         status: 'IN_CART',
       },
       include: {
-        model: OrderMenu,
+        model: Restaurant,
       },
       transaction: t,
     });
@@ -718,6 +718,31 @@ module.exports.fillCart = async (req, res, next) => {
     await t.commit();
   } catch (err) {
     await t.rollback();
+    next(err);
+  }
+};
+
+exports.searchMenuInRestaurant = async (req, res, next) => {
+  try {
+    const { restaurantId } = req.params;
+    const restaurant = await Restaurant.findByPk(restaurantId, {
+      include: {
+        model: Menu,
+        where: {
+          status: 'ACTIVE',
+        },
+        required: false,
+        include: {
+          model: Menu,
+          where: {
+            status: 'ACTIVE',
+          },
+          required: false,
+          include: {},
+        },
+      },
+    });
+  } catch (err) {
     next(err);
   }
 };

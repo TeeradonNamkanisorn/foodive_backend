@@ -34,7 +34,7 @@ const order = [
     distance: '10',
     status: 'IN_CART',
     customerLatitude: '100',
-    customerLongitude: '300',
+    customerLongitude: '20',
     addressName: 'home',
     customerId: '2',
     driverId: '2',
