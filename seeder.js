@@ -88,18 +88,18 @@ const orderMenuOption = [
     orderMenuOptionGroupId: '1',
     menuOptionId: '1',
   },
-  {
-    orderMenuOptionGroupId: '1',
-    menuOptionId: '2',
-  },
+  // {
+  //   orderMenuOptionGroupId: '1',
+  //   menuOptionId: '2',
+  // },
   {
     orderMenuOptionGroupId: '2',
     menuOptionId: '4',
   },
-  {
-    orderMenuOptionGroupId: '2',
-    menuOptionId: '5',
-  },
+  // {
+  //   orderMenuOptionGroupId: '2',
+  //   menuOptionId: '5',
+  // },
 ];
 
 const foodTags = [
@@ -401,15 +401,15 @@ const menuTags = [
 
 const categories = [
   {
-    name: 'other',
+    name: 'category 1',
     restaurantId: 1,
   },
   {
-    name: 'other',
+    name: 'category 2',
     restaurantId: 2,
   },
   {
-    name: 'other',
+    name: 'category 3',
     restaurantId: 3,
   },
 ];
@@ -431,10 +431,11 @@ const seed = async () => {
     await MenuTag.bulkCreate(menuTags, { transaction: t });
     await Order.bulkCreate(order, { transaction: t });
     await OrderMenu.bulkCreate(orderMenu, { transaction: t });
-    await OrderMenuOption.bulkCreate(orderMenuOption, { transaction: t });
     await OrderMenuOptionGroup.bulkCreate(orderMenuOptionGroup, {
       transaction: t,
     });
+    await OrderMenuOption.bulkCreate(orderMenuOption, { transaction: t }); //error
+
     await t.commit();
   } catch (err) {
     await t.rollback();
