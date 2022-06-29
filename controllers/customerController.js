@@ -589,20 +589,25 @@ exports.getMenuById = async (req, res, next) => {
   try {
     const { menuId } = req.params;
     const menu = await Menu.findByPk(menuId, {
-      include: {
-        model: MenuOptionGroup,
-        where: {
-          status: 'ACTIVE',
-        },
-        required: false,
-        include: {
-          model: MenuOption,
+      include: [
+        {
+          model: MenuOptionGroup,
           where: {
             status: 'ACTIVE',
           },
           required: false,
+          include: {
+            model: MenuOption,
+            where: {
+              status: 'ACTIVE',
+            },
+            required: false,
+          },
         },
-      },
+        {
+          model: Restaurant,
+        },
+      ],
     });
 
     res.json({ menu });

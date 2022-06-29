@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
     description: {
       type: DataTypes.TEXT,
     },
+    status: {
+      type: DataTypes.ENUM('ACTIVE', 'DEACTIVATED'),
+      defaultValue: 'ACTIVE',
+    },
   });
   Menu.associate = ({
     Restaurant,
