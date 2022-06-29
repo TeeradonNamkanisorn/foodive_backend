@@ -24,6 +24,13 @@ router.post(
   restaurantController.addMenu,
 );
 
+router.post('/addCategory', restaurantController.addCategory);
+router.delete(
+  '/deleteCategory/:categoryId',
+  restaurantController.deleteCategory,
+);
+router.post('/assignCategory', restaurantController.assignCategory);
+
 router.put(
   '/:restaurantId/menu/:menuId',
   multer.single('menuImage'),

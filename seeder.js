@@ -418,8 +418,8 @@ const seed = async () => {
   const t = await sequelize.transaction();
   try {
     await Customer.bulkCreate(customers, { transaction: t });
-    await Category.bulkCreate(categories, { transaction: t });
     await Restaurant.bulkCreate(restaurants, { transaction: t });
+    await Category.bulkCreate(categories, { transaction: t });
     await Driver.bulkCreate(drivers, { transaction: t });
     await Tag.bulkCreate(
       foodTags.map((tag) => ({ name: tag })),

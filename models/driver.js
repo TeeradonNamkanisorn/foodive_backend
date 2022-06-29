@@ -47,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
   Driver.associate = ({ Order }) => {
     Driver.hasMany(Order, {
       foreignKey: {
-        name: 'orderId',
+        name: 'driverId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
