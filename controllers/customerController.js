@@ -594,11 +594,13 @@ exports.getMenuById = async (req, res, next) => {
         where: {
           status: 'ACTIVE',
         },
+        required: false,
         include: {
           model: MenuOption,
           where: {
             status: 'ACTIVE',
           },
+          required: false,
         },
       },
     });
