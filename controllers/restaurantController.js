@@ -8,6 +8,9 @@ const {
   Order,
   Category,
   Restaurant,
+  OrderMenuOptionGroup,
+  OrderMenuOption,
+  OrderMenu,
 } = require('../models');
 const { Op } = require('sequelize');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
@@ -626,15 +629,6 @@ exports.pickDriver = async (req, res, next) => {
     );
     //
     res.json({ driver: chosenDriver });
-  } catch (err) {
-    next(err);
-  }
-};
-
-module.exports.fillCart = async (req, res, next) => {
-  try {
-    const { orderId } = req.body;
-    const cart = await Order.findByPk();
   } catch (err) {
     next(err);
   }

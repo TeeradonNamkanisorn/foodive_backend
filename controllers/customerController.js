@@ -615,3 +615,37 @@ exports.getMenuById = async (req, res, next) => {
     next(err);
   }
 };
+
+module.exports.fillCart = async (req, res, next) => {
+  try {
+    const { orderId } = req.body;
+    const cart = await Order.findByPk(orderId, {
+      include: {
+        model: OrderMenu,
+        include: [
+          {
+            model: Menu,
+          },
+          {
+            model: OrderMenuOptionGroup,
+            include: [
+              {
+                model: OrderMenuOption,
+              },
+              {
+                include: {
+                  model: OrderMenuOption,
+                  include: MenuOption,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    res.json({ cart });
+  } catch (err) {
+    next(err);
+  }
+};
