@@ -289,7 +289,7 @@ exports.modifyMenu = async (req, res, next) => {
 //
 exports.fetchMenus = async (req, res, next) => {
   try {
-    const { latitude, longitude, tag, keyword } = req.body;
+    const { latitude, longitude, tag, keyword = '' } = req.body;
     let restaurants = await Restaurant.findAll({
       include: {
         model: Menu,
@@ -306,15 +306,19 @@ exports.fetchMenus = async (req, res, next) => {
     restaurants = restaurants.map((restaurant) => {
       const matchedMenus = restaurant.Menus.filter((menu) => {
         // if part of the tags' string match the input tag
-        if (!tag && keyword) return menu.name.includes(keyword);
+        if (!tag && keyword)
+          return menu.name.toLowerCase().includes(keyword.toLowerCase());
         if (tag && !keyword) {
-          return menu.Tags.some((curTag) => curTag.name.includes(tag));
+          return menu.Tags.some((curTag) =>
+            curTag.name.toLowerCase().includes(tag.toLowerCase()),
+          );
         }
         if (!tag && !keyword) return true;
         if (tag && keyword) {
           return (
-            menu.Tags.some((curTag) => curTag.name.includes(tag)) ||
-            menu.name.includes(keyword)
+            menu.Tags.some((curTag) =>
+              curTag.name.toLowerCase().includes(tag.toLowerCase()),
+            ) || menu.name.toLowerCase().includes(keyword.toLowerCase())
           );
         }
       });
@@ -619,9 +623,10 @@ exports.getMenuById = async (req, res, next) => {
 };
 
 module.exports.fillCart = async (req, res, next) => {
+  const t = await sequelize.transaction();
   try {
-    const { orderId } = req.body;
-    const cart = await Order.findByPk(orderId, {
+    const { orderId } = req.params;
+    let cart = await Order.findByPk(orderId, {
       include: {
         model: OrderMenu,
         include: [
@@ -632,22 +637,87 @@ module.exports.fillCart = async (req, res, next) => {
             model: OrderMenuOptionGroup,
             include: [
               {
-                model: OrderMenuOption,
+                model: MenuOptionGroup,
               },
               {
-                include: {
-                  model: OrderMenuOption,
-                  include: MenuOption,
-                },
+                model: OrderMenuOption,
+                include: MenuOption,
               },
             ],
           },
         ],
       },
+      where: {
+        status: 'IN_CART',
+      },
+      transaction: t,
+    });
+
+    if (cart.status !== 'IN_CART') {
+      createError("The entity you're trying to edit is not a cart");
+    }
+    for (let orderMenu of cart.OrderMenus) {
+      const newMenuPrice = orderMenu.Menu.price;
+      const newMenuName = orderMenu.Menu.name;
+      const menuId = orderMenu.Menu.id;
+
+      await OrderMenu.update(
+        { name: newMenuName, price: newMenuPrice },
+        {
+          where: {
+            menuId,
+          },
+          transaction: t,
+        },
+      );
+      for (let orderMenuOptionGroup of orderMenu.OrderMenuOptionGroups) {
+        const newGroupName = orderMenuOptionGroup.MenuOptionGroup.name;
+        const groupId = orderMenuOptionGroup.MenuOptionGroup.id;
+        await OrderMenuOptionGroup.update(
+          { name: newGroupName },
+          { where: { menuOptionGroupId: groupId }, transaction: t },
+        );
+
+        for (let orderMenuOption of orderMenuOptionGroup.OrderMenuOptions) {
+          const newOptionName = orderMenuOption.MenuOption.name;
+          const newOptionPrice = orderMenuOption.MenuOption.price;
+          const optionId = orderMenuOption.MenuOption.id;
+          console.log(newOptionPrice);
+          await OrderMenuOption.update(
+            { name: newOptionName, price: newOptionPrice },
+            {
+              where: {
+                menuOptionId: optionId,
+              },
+              transaction: t,
+            },
+          );
+        }
+      }
+    }
+
+    cart = await Order.findByPk(orderId, {
+      include: {
+        model: OrderMenu,
+        include: [
+          {
+            model: OrderMenuOptionGroup,
+            include: [
+              {
+                model: OrderMenuOption,
+              },
+            ],
+          },
+        ],
+      },
+      transaction: t,
     });
 
     res.json({ cart });
+
+    await t.commit();
   } catch (err) {
+    await t.rollback();
     next(err);
   }
 };

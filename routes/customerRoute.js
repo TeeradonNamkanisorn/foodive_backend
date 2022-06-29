@@ -35,6 +35,6 @@ router.post('/searchMenus', customerController.fetchMenus);
 
 router.get('/getMenu/:menuId', customerController.getMenuById);
 
-router.get('/confirmCart/:orderId', customerController.fillCart);
+router.post('/confirmCart/:orderId', customerController.fillCart);
 
 module.exports = router;
