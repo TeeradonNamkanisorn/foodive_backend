@@ -33,4 +33,6 @@ router.delete('/address/:addressId', customerController.deleteAddress);
 
 router.post('/searchMenus', customerController.fetchMenus);
 
+router.get('/getMenu/:menuId', customerController.getMenuById);
+
 module.exports = router;

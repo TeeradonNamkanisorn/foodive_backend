@@ -584,3 +584,27 @@ exports.getCart = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getMenuById = async (req, res, next) => {
+  try {
+    const { menuId } = req.params;
+    const menu = await Menu.findByPk(menuId, {
+      include: {
+        model: MenuOptionGroup,
+        where: {
+          status: 'ACTIVE',
+        },
+        include: {
+          model: MenuOption,
+          where: {
+            status: 'ACTIVE',
+          },
+        },
+      },
+    });
+
+    res.json({ menu });
+  } catch (err) {
+    next(err);
+  }
+};
