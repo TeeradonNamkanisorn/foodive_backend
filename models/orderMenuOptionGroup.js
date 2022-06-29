@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const OrderMenuOptionGroup = sequelize.define('OrderMenuOptionGroup', {
     // optional, for search optimization
-    orderMenuId: DataTypes.INTEGER,
+    // orderMenuId: DataTypes.INTEGER,
   });
 
   OrderMenuOptionGroup.associate = ({

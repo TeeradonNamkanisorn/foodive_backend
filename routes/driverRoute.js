@@ -13,4 +13,6 @@ router.patch(
 router.patch('/updateStatus', driverController.updateStatus);
 router.patch('/updateLocation', driverController.updateLocation);
 
+router.post('/searchOrder', driverController.searchOrder);
+
 module.exports = router;

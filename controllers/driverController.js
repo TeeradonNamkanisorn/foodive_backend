@@ -1,6 +1,13 @@
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
-const { Driver } = require('../models');
+const {
+  Driver,
+  Order,
+  Restaurant,
+  sequelize,
+  OrderMenu,
+} = require('../models');
+const { Op } = require('sequelize');
 
 exports.getMe = async (req, res, next) => {
   try {
@@ -97,3 +104,28 @@ exports.updateLocation = async (req, res, next) => {
 };
 
 exports.acceptOrder = async (req, res, next) => {};
+
+exports.searchOrder = async (req, res, next) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { latitude, longitude } = req.body;
+    let order = await Order.findAll({
+      // where: {},
+
+      include: {
+        model: Restaurant,
+      },
+      include: {
+        model: OrderMenu,
+      },
+
+      transaction: t,
+    });
+    await t.commit();
+    res.json({ order });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};

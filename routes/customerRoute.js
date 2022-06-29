@@ -22,7 +22,7 @@ router.post(
 );
 
 /// test
-router.get('/search/:menuName', customerController.searchByMenu);
+// router.get('/search/:menuName', customerController.searchByMenu);
 router.get('/cart/:cartId', customerController.getCart);
 router.get('/carts', customerController.getAllCarts);
 
