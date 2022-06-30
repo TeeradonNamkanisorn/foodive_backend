@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     addressGoogleMap: DataTypes.TEXT,
+
     latitude: {
       type: DataTypes.DECIMAL,
       allowNull: false,

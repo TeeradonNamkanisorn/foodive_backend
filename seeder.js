@@ -157,6 +157,8 @@ const drivers = [
     firstName: 'ThemeDriver',
     lastName: 'Driver',
     phoneNumber: '0922998800',
+    latitude: 13.744573458078486,
+    longitude: 100.52333650466416,
   },
   {
     email: 'Doggy@gmail.com',
@@ -164,6 +166,8 @@ const drivers = [
     firstName: 'DoggyDriver',
     lastName: 'Driverrr',
     phoneNumber: '0822998039',
+    latitude: 13.744573458078486,
+    longitude: 100.52333650466416,
   },
   {
     email: 'Fox@gmail.com',
@@ -171,6 +175,8 @@ const drivers = [
     firstName: 'foxy',
     lastName: 'squishy',
     phoneNumber: '0918009999',
+    latitude: 13.744573458078486,
+    longitude: 100.52333650466416,
   },
 ];
 
@@ -178,10 +184,10 @@ const restaurants = [
   {
     email: 'siamRestaurant@gmail.com',
     password: '$2a$10$6VVLjzxhP7r9OtL7FpG/Auhn6PYwyoOeULtZLZGnW..qYqE8WmcZa',
-    name: 'Siam Restaurant',
+    name: 'Jeh O Chula',
     phoneNumber: '0822225555',
-    latitude: 100,
-    longitude: 100,
+    latitude: 13.742559513107528,
+    longitude: 100.52253269980905,
     image:
       'https://a.cdn-hotels.com/gdcs/production1/d32/f93e1d15-b49b-4699-8904-06f8074f0f35.jpg',
     imagePublicId: 'none',
@@ -189,10 +195,10 @@ const restaurants = [
   {
     email: 'frenchRestaurant@gmail.com',
     password: '$2a$10$6VVLjzxhP7r9OtL7FpG/Auhn6PYwyoOeULtZLZGnW..qYqE8WmcZa',
-    name: 'French Restaurant',
+    name: 'James Boulangerie',
     phoneNumber: '0822224444',
-    latitude: 101,
-    longitude: 100,
+    latitude: 13.753253317880345,
+    longitude: 100.43550537963817,
     image:
       'https://cdn.vox-cdn.com/thumbor/EKrsctH4FQDbuUKic89L3tiWULc=/0x0:1700x960/1200x800/filters:focal(714x344:986x616)/cdn.vox-cdn.com/uploads/chorus_image/image/69525497/restaurant_01_6b56e1a4.0.jpg',
     imagePublicId: 'none',
