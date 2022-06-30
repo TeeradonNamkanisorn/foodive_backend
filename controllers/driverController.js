@@ -7,7 +7,8 @@ const {
   sequelize,
   OrderMenu,
 } = require('../models');
-const { Op } = require('sequelize');
+const { Op, where, QueryTypes } = require('sequelize');
+const getDistanceFromLatLonInKm = require('../services/calcDistance');
 
 exports.getMe = async (req, res, next) => {
   try {
@@ -107,23 +108,35 @@ exports.acceptOrder = async (req, res, next) => {};
 
 exports.searchOrder = async (req, res, next) => {
   const t = await sequelize.transaction();
-
   try {
     const { latitude, longitude } = req.body;
     let order = await Order.findAll({
-      // where: {},
-
-      include: {
-        model: Restaurant,
-      },
-      include: {
-        model: OrderMenu,
-      },
+      include: [
+        {
+          model: Restaurant,
+        },
+        {
+          model: OrderMenu,
+        },
+      ],
 
       transaction: t,
     });
     await t.commit();
-    res.json({ order });
+    parseorder = JSON.parse(JSON.stringify(order));
+    let orderArr = [];
+    parseorder.forEach((element) => {
+      getDistanceFromLatLonInKm(
+        latitude,
+        longitude,
+        element.Restaurant.latitude,
+        element.Restaurant.longitude,
+      ) <= 10
+        ? orderArr.push(element)
+        : '';
+    });
+
+    res.json({ order: orderArr });
   } catch (err) {
     await t.rollback();
     next(err);
