@@ -34,10 +34,10 @@ module.exports = (sequelize, DataTypes) => {
         default: 'UNAVAILABLE',
       },
       latitude: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(18, 15),
       },
       longitude: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(18, 15),
       },
     },
     {

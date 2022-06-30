@@ -7,7 +7,7 @@ const {
   sequelize,
   OrderMenu,
 } = require('../models');
-const { Op, where, QueryTypes } = require('sequelize');
+const { Op, where, QueryTypes, and } = require('sequelize');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
 
 exports.getMe = async (req, res, next) => {
@@ -104,13 +104,29 @@ exports.updateLocation = async (req, res, next) => {
   }
 };
 
-exports.acceptOrder = async (req, res, next) => {};
+exports.acceptOrder = async (req, res, next) => {
+  try {
+    const driverId = req.user.id;
+    const { id } = req.params;
+    if (!id) {
+      createError('order id are required', 400);
+    }
+    await Order.update({ driverId }, { where: { id } });
+
+    res.json({ message: `orderId : ${id} accepted by driverId : ${driverId}` });
+  } catch (err) {
+    next(err);
+  }
+};
 
 exports.searchOrder = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const { latitude, longitude } = req.body;
     let order = await Order.findAll({
+      where: {
+        status: 'RESTAURANT_PENDING',
+      },
       include: [
         {
           model: Restaurant,
@@ -123,7 +139,9 @@ exports.searchOrder = async (req, res, next) => {
       transaction: t,
     });
     await t.commit();
+
     parseorder = JSON.parse(JSON.stringify(order));
+    console.log(parseorder);
     let orderArr = [];
     parseorder.forEach((element) => {
       getDistanceFromLatLonInKm(
@@ -131,7 +149,7 @@ exports.searchOrder = async (req, res, next) => {
         longitude,
         element.Restaurant.latitude,
         element.Restaurant.longitude,
-      ) <= 10
+      ) <= 5
         ? orderArr.push(element)
         : '';
     });
@@ -139,6 +157,61 @@ exports.searchOrder = async (req, res, next) => {
     res.json({ order: orderArr });
   } catch (err) {
     await t.rollback();
+    next(err);
+  }
+};
+
+exports.getIncome = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { id } = req.body;
+    let order = await Order.findAll({
+      where: {
+        status: 'DELIVERED',
+        driverId: id,
+      },
+      attributes: [
+        [sequelize.fn('sum', sequelize.col('deliveryFee')), 'totalDeliveryFee'],
+      ],
+    });
+
+    res.json({ income: order });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+
+exports.deliveringStatus = async (req, res, next) => {
+  try {
+    const driverId = req.user.id;
+    const { id } = req.params;
+    if (!id) {
+      createError('order id are required', 400);
+    }
+    await Order.update({ status: 'DELIVERY_PENDING' }, { where: { id } });
+
+    res.json({
+      message: `orderId : ${id} status : ${'DELIVERY_PENDING'} by driverId : ${driverId}`,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deliveredStatus = async (req, res, next) => {
+  try {
+    const driverId = req.user.id;
+    const { id } = req.params;
+    if (!id) {
+      createError('order id are required', 400);
+    }
+    await Order.update({ status: 'DELIVERED' }, { where: { id } });
+
+    res.json({
+      message: `orderId : ${id} status : ${'DELIVERED'} by driverId : ${driverId}`,
+    });
+  } catch (err) {
     next(err);
   }
 };

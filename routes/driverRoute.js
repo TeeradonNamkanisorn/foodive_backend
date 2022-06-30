@@ -14,5 +14,9 @@ router.patch('/updateStatus', driverController.updateStatus);
 router.patch('/updateLocation', driverController.updateLocation);
 
 router.post('/searchOrder', driverController.searchOrder);
+router.get('/getIncome', driverController.getIncome);
+router.post('/orderAccepted/:id', driverController.acceptOrder);
+router.post('/deliveringStatus/:id', driverController.deliveringStatus);
+router.post('/deliveredStatus/:id', driverController.deliveredStatus);
 
 module.exports = router;
