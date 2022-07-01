@@ -1,27 +1,84 @@
 module.exports = (sequelize, DataTypes) => {
-    const Menu = sequelize.define('Menu', {
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false
-        }
-    })
-    Menu.associate = (models) => {
-        Menu.belongsTo(models.Restaurant, {
-            allowNull: false,
-            onDelete: "RESTRICT",
-            onUpdate: "RESTRICT",
-            foreignKey: {
-                name: "restaurantId"
-            }
-        })
+  const Menu = sequelize.define('Menu', {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    //base price; options' prices not included.
+    price: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    menuImage: {
+      type: DataTypes.STRING,
+      //allowNull: false,
+    },
+    // Used to delete cloudinary image when update or deleting
+    menuImagePublicId: {
+      type: DataTypes.STRING,
+    },
+    description: {
+      type: DataTypes.TEXT,
+    },
+    status: {
+      type: DataTypes.ENUM('ACTIVE', 'DEACTIVATED'),
+      defaultValue: 'ACTIVE',
+    },
+  });
+  Menu.associate = ({
+    Restaurant,
+    Tag,
+    MenuTag,
+    MenuOptionGroup,
+    OrderMenu,
+    Category,
+  }) => {
+    Menu.belongsTo(Restaurant, {
+      allowNull: false,
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+      foreignKey: {
+        name: 'restaurantId',
+        allowNull: false,
+      },
+    });
 
-        // Menu { include: Category } NOT include : MenuCategory
-        Menu.belongsToMany(models.Category, {
-            through: models.MenuCategory,
-            foreignKey: {
-                name: "menuId"
-            }
-        })
-    }
-    return Menu
-}
+    // Menu { include: Tag } NOT include : MenuTag
+    Menu.belongsToMany(Tag, {
+      through: MenuTag,
+      foreignKey: {
+        name: 'menuId',
+      },
+      onDelete: 'SET NULL',
+      onUpdate: 'SET NULL',
+    });
+
+    Menu.hasMany(MenuOptionGroup, {
+      foreignKey: {
+        name: 'menuId',
+        allowNull: false,
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    Menu.hasMany(OrderMenu, {
+      foreignKey: {
+        name: 'menuId',
+        allowNull: false,
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    Menu.belongsTo(Category, {
+      foreignKey: {
+        name: 'categoryId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+  };
+  return Menu;
+};
