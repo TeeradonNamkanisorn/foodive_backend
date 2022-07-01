@@ -580,6 +580,8 @@ exports.getCart = async (req, res, next) => {
       },
     });
 
+    if (!cart) createError('cart not found', 400);
+
     let cartSurface = await Order.findByPk(cartId);
     cartSurface = JSON.parse(JSON.stringify(cartSurface));
 
