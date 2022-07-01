@@ -21,8 +21,8 @@ const order = [
     deliveryFee: 10,
     distance: 10,
     status: 'DELIVERY_PENDING',
-    customerLatitude: 100,
-    customerLongitude: 100,
+    customerLatitude: 14,
+    customerLongitude: 100.5,
     addressName: 'home',
     customerId: 1,
     driverId: 1,
@@ -33,8 +33,8 @@ const order = [
     deliveryFee: '10',
     distance: '10',
     status: 'IN_CART',
-    customerLatitude: 100,
-    customerLongitude: 20,
+    customerLatitude: '100',
+    customerLongitude: '20',
     addressName: 'home',
     customerId: 2,
     driverId: 2,
@@ -72,6 +72,7 @@ const orderMenu = [
     menuId: 5,
   },
 ];
+
 const orderMenuOptionGroup = [
   {
     orderMenuId: 1,

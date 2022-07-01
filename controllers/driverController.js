@@ -107,22 +107,21 @@ exports.updateLocation = async (req, res, next) => {
 exports.acceptOrder = async (req, res, next) => {};
 
 exports.searchOrder = async (req, res, next) => {
-  const t = await sequelize.transaction();
   try {
     const { latitude, longitude } = req.body;
     let order = await Order.findAll({
       include: [
         {
           model: Restaurant,
+          attributes: {
+            exclude: ['password'],
+          },
         },
         {
           model: OrderMenu,
         },
       ],
-
-      transaction: t,
     });
-    await t.commit();
     parseorder = JSON.parse(JSON.stringify(order));
     let orderArr = [];
     parseorder.forEach((element) => {
@@ -138,7 +137,20 @@ exports.searchOrder = async (req, res, next) => {
 
     res.json({ order: orderArr });
   } catch (err) {
-    await t.rollback();
+    next(err);
+  }
+};
+
+exports.getOrderById = async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findByPk(orderId);
+
+    if (order.status === 'IN_CART')
+      createError('You cannot view this resource', 400);
+
+    res.json({ order });
+  } catch (err) {
     next(err);
   }
 };

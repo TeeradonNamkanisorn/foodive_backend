@@ -12,11 +12,11 @@ module.exports = (sequelize, DataTypes) => {
     addressGoogleMap: DataTypes.TEXT,
 
     latitude: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.DECIMAL(18, 15),
       allowNull: false,
     },
     longitude: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.DECIMAL(18, 15),
       allowNull: false,
     },
   });

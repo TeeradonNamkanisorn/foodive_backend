@@ -612,6 +612,9 @@ exports.getMenuById = async (req, res, next) => {
         },
         {
           model: Restaurant,
+          attributes: {
+            exclude: ['password'],
+          },
         },
       ],
     });
