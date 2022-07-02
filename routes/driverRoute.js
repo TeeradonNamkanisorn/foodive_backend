@@ -13,4 +13,8 @@ router.patch(
 router.patch('/updateStatus', driverController.updateStatus);
 router.patch('/updateLocation', driverController.updateLocation);
 
+router.post('/searchOrder', driverController.searchOrder);
+
+router.get('/order/:orderId', driverController.getOrderById);
+
 module.exports = router;

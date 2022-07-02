@@ -1,6 +1,14 @@
 const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
-const { Driver } = require('../models');
+const {
+  Driver,
+  Order,
+  Restaurant,
+  sequelize,
+  OrderMenu,
+} = require('../models');
+const { Op, where, QueryTypes } = require('sequelize');
+const getDistanceFromLatLonInKm = require('../services/calcDistance');
 
 exports.getMe = async (req, res, next) => {
   try {
@@ -97,3 +105,52 @@ exports.updateLocation = async (req, res, next) => {
 };
 
 exports.acceptOrder = async (req, res, next) => {};
+
+exports.searchOrder = async (req, res, next) => {
+  try {
+    const { latitude, longitude } = req.body;
+    let order = await Order.findAll({
+      include: [
+        {
+          model: Restaurant,
+          attributes: {
+            exclude: ['password'],
+          },
+        },
+        {
+          model: OrderMenu,
+        },
+      ],
+    });
+    parseorder = JSON.parse(JSON.stringify(order));
+    let orderArr = [];
+    parseorder.forEach((element) => {
+      getDistanceFromLatLonInKm(
+        latitude,
+        longitude,
+        element.Restaurant.latitude,
+        element.Restaurant.longitude,
+      ) <= 10
+        ? orderArr.push(element)
+        : '';
+    });
+
+    res.json({ order: orderArr });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getOrderById = async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findByPk(orderId);
+
+    if (order.status === 'IN_CART')
+      createError('You cannot view this resource', 400);
+
+    res.json({ order });
+  } catch (err) {
+    next(err);
+  }
+};

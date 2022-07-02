@@ -1,0 +1,17 @@
+-- select *,((300+300) - (res.latitude+res.longitude)) as distance
+-- from orders ord
+-- join restaurants res
+-- on ord.restaurantId = res.id
+-- join ordermenus ordmenu
+-- on ordmenu.orderId = ord.id
+-- group by restaurantId
+-- having distance <= 400 and ord.status ="DELIVERY_PENDING"
+
+select * 
+from restaurants res
+join menus men 
+on res.id = men.restaurantId
+join menutags mentag 
+on mentag.menuId = men.id
+join tags tag
+on tag.id = mentag.tagId

@@ -18,18 +18,21 @@ module.exports = (sequelize, DataTypes) => {
     image: {
       type: DataTypes.STRING,
     },
+    imagePublicId: {
+      type: DataTypes.STRING,
+    },
     phoneNumber: {
       type: DataTypes.STRING,
     },
     latitude: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.DECIMAL(18, 15),
     },
     longitude: {
-      type: DataTypes.DECIMAL,
+      type: DataTypes.DECIMAL(18, 15),
     },
   });
 
-  Restaurant.associate = ({ Menu, Order }) => {
+  Restaurant.associate = ({ Menu, Order, Category }) => {
     Restaurant.hasMany(Menu, {
       allowNull: false,
       onDelete: 'RESTRICT',
@@ -40,6 +43,14 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Restaurant.hasMany(Order, {
+      foreignKey: {
+        name: 'restaurantId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    Restaurant.hasMany(Category, {
       foreignKey: {
         name: 'restaurantId',
       },

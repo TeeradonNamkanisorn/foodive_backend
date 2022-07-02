@@ -5,7 +5,12 @@ const {
   MenuOptionGroup,
   MenuTag,
   Driver,
+  Order,
+  Category,
   Restaurant,
+  OrderMenuOptionGroup,
+  OrderMenuOption,
+  OrderMenu,
 } = require('../models');
 const { Op } = require('sequelize');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
@@ -23,6 +28,99 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
+exports.updateRestaurant = async (req, res, next) => {
+  try {
+    // UPDATE : name , image
+    const { name } = req.body;
+    const restaurant = req.user;
+
+    if (!restaurant) {
+      createError('You are unauthorized.', 400);
+    }
+
+    if (!req.imageFile && !name) {
+      createError('Cannot update empty value.', 400);
+    }
+
+    if (name) {
+      restaurant.name = name;
+    }
+
+    // check if image have file image or not.
+    // if have file image then remove image.
+    if (req.imageFile && restaurant.image) {
+      const deletePreviousImage = await destroy(restaurant.imagePublicId);
+      console.log(deletePreviousImage);
+    }
+
+    if (req.imageFile) {
+      restaurant.imagePublicId = req.imageFile.public_id;
+      restaurant.image = req.imageFile.secure_url;
+    }
+
+    await restaurant.save();
+
+    res.json({ message: 'Update profile restaurant success.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateStatusRes = async (req, res, next) => {
+  try {
+    // ENUM('open', 'close')
+    const { status } = req.body;
+    const restaurant = req.user;
+
+    console.log(status);
+
+    if (status !== 'open' && status !== 'close') {
+      createError('Status must be "open" or "close"', 400);
+    }
+
+    if (restaurant.status === status) {
+      createError(
+        'New status is equal current status. Please change value of new status. ',
+        400,
+      );
+    }
+
+    if (status) {
+      restaurant.status = status;
+    }
+
+    await restaurant.save();
+
+    console.log(restaurant.status);
+
+    res.json({ message: 'Change status restaurant success.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateAddressRes = async (req, res, next) => {
+  try {
+    const { longitude, latitude } = req.body;
+    const restaurant = req.user;
+
+    if (!latitude && !longitude) {
+      createError('Address is required', 400);
+    }
+
+    if ((longitude, latitude)) {
+      restaurant.longitude = longitude;
+      restaurant.latitude = latitude;
+    }
+
+    await restaurant.save();
+
+    res.json({ message: 'Update store location is success' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.addMenu = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
@@ -30,7 +128,7 @@ exports.addMenu = async (req, res, next) => {
     if (restaurant.status !== 'close') {
       createError('Restaurant must be closed first before editing');
     }
-    const { name, price, description } = req.body;
+    const { name, price, description, categoryId } = req.body;
     const menuOptionGroups = JSON.parse(req.body.menuOptionGroups);
 
     const { restaurantId } = req.params;
@@ -43,6 +141,18 @@ exports.addMenu = async (req, res, next) => {
     if (!name) createError('Menu name is required', 400);
     if (!menuImage) createError('Menu image is required', 400);
 
+    const restaurantOtherCategory = await Category.findOne(
+      {
+        where: {
+          name: 'other',
+          restaurantId: restaurantId,
+        },
+      },
+      { transaction: t },
+    );
+
+    console.log(categoryId, restaurantOtherCategory.id);
+
     const menu = await Menu.create(
       {
         name,
@@ -51,6 +161,7 @@ exports.addMenu = async (req, res, next) => {
         menuImage,
         menuImagePublicId,
         restaurantId,
+        categoryId: categoryId || restaurantOtherCategory.id,
       },
       { transaction: t },
     );
@@ -84,8 +195,11 @@ exports.addMenu = async (req, res, next) => {
       }
     }
 
+    await t.commit();
+
     res.status(201).json({ menu });
   } catch (err) {
+    await t.rollback();
     next(err);
   } finally {
     clearFolder('./public/images');
@@ -98,6 +212,8 @@ exports.editMenu = async (req, res, next) => {
     const { name, price, description } = req.body;
 
     const menuOptionGroups = JSON.parse(req.body.menuOptionGroups);
+
+    const imageFile = req.imageFile;
 
     const { menuId } = req.params;
     const menuOptionGroupsToBeDeleted = await MenuOptionGroup.findAll({
@@ -118,10 +234,6 @@ exports.editMenu = async (req, res, next) => {
 
     if (menu.restaurantId !== restaurant.id)
       createError('You are unauthorized', 403);
-
-    menu.name = name;
-    menu.price = price;
-    menu.description = description;
 
     let menuImagePublicId;
     let menuImage;
@@ -344,6 +456,87 @@ exports.editMenu = async (req, res, next) => {
 //   }
 // };
 
+exports.addCategory = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    const restaurantId = req.user.id;
+
+    const category = await Category.create({ restaurantId, name });
+
+    res.json({ category });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.assignCategory = async (req, res, next) => {
+  try {
+    const { menuId, categoryId } = req.body;
+    await Menu.update(
+      { categoryId },
+      {
+        where: {
+          id: menuId,
+        },
+      },
+    );
+
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteCategory = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const restaurantId = req.user.id;
+    const { categoryId } = req.params;
+
+    const category = await Category.findByPk(categoryId, { transaction: t });
+
+    if (category.name === 'other')
+      createError('You cannot delete this category');
+
+    const menus = await Menu.findAll({
+      where: {
+        categoryId,
+      },
+    });
+
+    const menuIds = JSON.parse(JSON.stringify(menus)).map((menu) => menu.id);
+    const otherCategory = await Category.findOne({
+      where: {
+        name: 'other',
+        restaurantId,
+      },
+    });
+
+    await Menu.update(
+      {
+        categoryId: otherCategory.id,
+      },
+      {
+        where: {
+          id: {
+            [Op.in]: menuIds,
+          },
+        },
+      },
+    );
+
+    await Category.destroy({
+      where: {
+        id: categoryId,
+      },
+    });
+
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.assignTags = async (req, res, next) => {
   try {
     const { tagIds, menuId } = req.body;
@@ -440,3 +633,5 @@ exports.pickDriver = async (req, res, next) => {
     next(err);
   }
 };
+
+//

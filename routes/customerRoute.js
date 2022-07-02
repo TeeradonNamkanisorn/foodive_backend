@@ -6,6 +6,7 @@ const authenticator = require('../middlewares/authenticator');
 
 router.get('/getMe', customerController.getMe);
 router.get('/restaurant/:id', customerController.getRestaurantById);
+
 router.post('/addCart', customerController.createCart);
 
 router.post('/cart/:cartId/append-menu', customerController.appendMenu);
@@ -22,7 +23,7 @@ router.post(
 );
 
 /// test
-router.get('/search/:menuName', customerController.searchByMenu);
+// router.get('/search/:menuName', customerController.searchByMenu);
 router.get('/cart/:cartId', customerController.getCart);
 router.get('/carts', customerController.getAllCarts);
 
@@ -31,6 +32,10 @@ router.post('/address', customerController.createAddress);
 
 router.delete('/address/:addressId', customerController.deleteAddress);
 
-router.post('/getMenus', customerController.fetchMenus);
+router.post('/searchMenus', customerController.fetchMenus);
+
+router.get('/getMenu/:menuId', customerController.getMenuById);
+
+router.post('/confirmCart/:orderId', customerController.fillCart);
 
 module.exports = router;

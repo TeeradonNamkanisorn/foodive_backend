@@ -33,8 +33,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM('AVAILABLE', 'UNAVAILABLE'),
         default: 'UNAVAILABLE',
       },
-      latitude: DataTypes.DECIMAL,
-      longitude: DataTypes.DECIMAL,
+      latitude: {
+        type: DataTypes.DECIMAL(18, 15),
+      },
+      longitude: {
+        type: DataTypes.DECIMAL(18, 15),
+      },
     },
     {
       indexes: [
@@ -47,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
   Driver.associate = ({ Order }) => {
     Driver.hasMany(Order, {
       foreignKey: {
-        name: 'orderId',
+        name: 'driverId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',

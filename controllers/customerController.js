@@ -5,7 +5,10 @@ const {
   sequelize,
   OrderMenuOption,
   Customer,
+  MenuOption,
+  Category,
   OrderMenuOptionGroup,
+  MenuOptionGroup,
   Menu,
   Restaurant,
   Tag,
@@ -20,64 +23,6 @@ const createError = require('../services/createError');
 const { destroy } = require('../utils/cloudinary');
 const { Op } = require('sequelize');
 const getDistanceFromLatLonInKm = require('../services/calcDistance');
-
-// module.exports.createCart = async (req, res, next) => {
-//   const t = await sequelize.transaction();
-//   try {
-//     const { menus, restaurantId } = req.body;
-
-//     const order = await Order.create(
-//       {
-//         customerId: req.user.id,
-//         //driverId later when the restaurant confirms the order
-//         restaurantId,
-//       },
-//       {
-//         transaction: t,
-//       },
-//     );
-
-//     for (let menu of menus) {
-//       const menuId = menu.id;
-//       const menuComment = menu.comment;
-//       const orderMenu = await OrderMenu.create(
-//         { menuId, comment: menuComment, orderId: order.id },
-//         { transaction: t },
-//       );
-
-//       for (let optionGroup of menu.optionGroups) {
-//         for (let option of optionGroup.options) {
-//           await OrderMenuOption.create(
-//             {
-//               orderMenuId: orderMenu.id,
-//               menuOptionId: option.id,
-//             },
-//             { transaction: t },
-//           );
-//         }
-//       }
-//     }
-
-//     const cart = await Order.findOne({
-//       where: {
-//         id: order.id,
-//       },
-//       include: {
-//         model: OrderMenu,
-//         include: {
-//           model: OrderMenuOption,
-//         },
-//       },
-//       transaction: t,
-//     });
-
-//     await t.commit();
-//     res.json({ cart });
-//   } catch (err) {
-//     await t.rollback();
-//     next(err);
-//   }
-// };
 
 module.exports.createCart = async (req, res, next) => {
   const t = await sequelize.transaction();
@@ -344,11 +289,14 @@ exports.modifyMenu = async (req, res, next) => {
 //
 exports.fetchMenus = async (req, res, next) => {
   try {
-    const { latitude, longitude, tag, keyword } = req.body;
+    const { latitude, longitude, tag, keyword = '' } = req.body;
     let restaurants = await Restaurant.findAll({
       include: {
         model: Menu,
-        include: Tag,
+        include: {
+          model: Tag,
+          attributes: ['id', 'name'],
+        },
       },
     });
 
@@ -356,25 +304,26 @@ exports.fetchMenus = async (req, res, next) => {
     restaurants = JSON.parse(JSON.stringify(restaurants));
 
     restaurants = restaurants.map((restaurant) => {
-      // count the number of matched tags in the restaurant
-      // const matches = restaurant.Menus.reduce((sum, menu) => {
-      //   console.log(menu.Tags);
-      //   if (menu.Tags.some((curTag) => curTag.name.includes(tag))) {
-      //     return sum + 1;
-      //   } else {
-      //     return sum;
-      //   }
-      // }, 0);
       const matchedMenus = restaurant.Menus.filter((menu) => {
         // if part of the tags' string match the input tag
-        return (
-          menu.Tags.some((curTag) => curTag.name.includes(tag)) ||
-          (keyword && menu.name.includes(keyword))
-        );
+        if (!tag && keyword)
+          return menu.name.toLowerCase().includes(keyword.toLowerCase());
+        if (tag && !keyword) {
+          return menu.Tags.some((curTag) =>
+            curTag.name.toLowerCase().includes(tag.toLowerCase()),
+          );
+        }
+        if (!tag && !keyword) return true;
+        if (tag && keyword) {
+          return (
+            menu.Tags.some((curTag) =>
+              curTag.name.toLowerCase().includes(tag.toLowerCase()),
+            ) || menu.name.toLowerCase().includes(keyword.toLowerCase())
+          );
+        }
       });
       const matches = matchedMenus.length;
 
-      console.log('matches: ', matches);
       const distance = getDistanceFromLatLonInKm(
         latitude,
         longitude,
@@ -387,11 +336,12 @@ exports.fetchMenus = async (req, res, next) => {
     });
 
     restaurants.sort((a, b) => b.score - a.score);
+    console.log(restaurants);
 
     // select one menu from restaurant
     let menus = restaurants.map((restaurant) => {
       // will write the algorithm here
-      console.log(restaurant);
+
       const chosenMenu = restaurant.Menus[0];
 
       return chosenMenu
@@ -399,6 +349,7 @@ exports.fetchMenus = async (req, res, next) => {
             id: chosenMenu.id,
             name: chosenMenu.name,
             description: chosenMenu.description,
+            tags: chosenMenu.Tags,
             price: chosenMenu.price,
             menuImage: chosenMenu.menuImage,
             Restaurant: {
@@ -413,6 +364,7 @@ exports.fetchMenus = async (req, res, next) => {
           }
         : null;
     });
+    console.log(menus);
     menus = menus.filter((menu) => Boolean(menu));
     res.json({ menus });
   } catch (error) {
@@ -473,28 +425,30 @@ exports.updateProfile = async (req, res, next) => {
 };
 
 /// test
-exports.searchByMenu = async (req, res, next) => {
-  const t = await sequelize.transaction();
-  try {
-    const { menuName } = req.params;
-    console.log('');
-    const menu = await Menu.findAll({
-      where: {
-        name: menuName,
-      },
-      include: {
-        model: Restaurant,
-      },
-      transaction: t,
-    });
+// exports.searchByMenu = async (req, res, next) => {
+//   const t = await sequelize.transaction();
+//   try {
+//     const { menuName } = req.params;
+//     console.log('');
+//     const menu = await Menu.findAll({
+//       where: {
+//         name: {
+//           [Op.like]: `%${menuName}%`,
+//         },
+//       },
+//       include: {
+//         model: Restaurant,
+//       },
+//       transaction: t,
+//     });
 
-    await t.commit();
-    res.json({ menu });
-  } catch (err) {
-    await t.rollback();
-    next(err);
-  }
-};
+//     await t.commit();
+//     res.json({ menu });
+//   } catch (err) {
+//     await t.rollback();
+//     next(err);
+//   }
+// };
 // address
 exports.createAddress = async (req, res, next) => {
   try {
@@ -539,20 +493,26 @@ exports.createAddress = async (req, res, next) => {
 };
 
 exports.getRestaurantById = async (req, res, next) => {
-  const t = await sequelize.transaction();
-
   try {
     const { id } = req.params;
 
-    const restaurant = await Restaurant.findAll({
-      where: {
-        id: id,
+    const restaurant = await Restaurant.findByPk(id, {
+      include: {
+        model: Category,
+        include: {
+          model: Menu,
+          include: {
+            model: MenuOptionGroup,
+            include: {
+              model: MenuOption,
+            },
+          },
+        },
       },
     });
 
     res.json({ restaurant });
   } catch (error) {
-    await t.rollback();
     next(error);
   }
 };
@@ -591,7 +551,7 @@ exports.getAllCarts = async (req, res, next) => {
         status: 'IN_CART',
       },
       include: {
-        model: OrderMenu,
+        model: Restaurant,
       },
       transaction: t,
     });
@@ -620,12 +580,173 @@ exports.getCart = async (req, res, next) => {
       },
     });
 
+    if (!cart) createError('cart not found', 400);
+
     let cartSurface = await Order.findByPk(cartId);
     cartSurface = JSON.parse(JSON.stringify(cartSurface));
 
     const cartItems = await getFullCart(JSON.parse(JSON.stringify(cart)));
 
     res.json({ ...cartSurface, cartItems });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getMenuById = async (req, res, next) => {
+  try {
+    const { menuId } = req.params;
+    const menu = await Menu.findByPk(menuId, {
+      include: [
+        {
+          model: MenuOptionGroup,
+          where: {
+            status: 'ACTIVE',
+          },
+          required: false,
+          include: {
+            model: MenuOption,
+            where: {
+              status: 'ACTIVE',
+            },
+            required: false,
+          },
+        },
+        {
+          model: Restaurant,
+          attributes: {
+            exclude: ['password'],
+          },
+        },
+      ],
+    });
+
+    res.json({ menu });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports.fillCart = async (req, res, next) => {
+  const t = await sequelize.transaction();
+  try {
+    const { orderId } = req.params;
+    let cart = await Order.findByPk(orderId, {
+      include: {
+        model: OrderMenu,
+        include: [
+          {
+            model: Menu,
+          },
+          {
+            model: OrderMenuOptionGroup,
+            include: [
+              {
+                model: MenuOptionGroup,
+              },
+              {
+                model: OrderMenuOption,
+                include: MenuOption,
+              },
+            ],
+          },
+        ],
+      },
+      where: {
+        status: 'IN_CART',
+      },
+      transaction: t,
+    });
+
+    if (cart.status !== 'IN_CART') {
+      createError("The entity you're trying to edit is not a cart");
+    }
+    for (let orderMenu of cart.OrderMenus) {
+      const newMenuPrice = orderMenu.Menu.price;
+      const newMenuName = orderMenu.Menu.name;
+      const menuId = orderMenu.Menu.id;
+
+      await OrderMenu.update(
+        { name: newMenuName, price: newMenuPrice },
+        {
+          where: {
+            menuId,
+          },
+          transaction: t,
+        },
+      );
+      for (let orderMenuOptionGroup of orderMenu.OrderMenuOptionGroups) {
+        const newGroupName = orderMenuOptionGroup.MenuOptionGroup.name;
+        const groupId = orderMenuOptionGroup.MenuOptionGroup.id;
+        await OrderMenuOptionGroup.update(
+          { name: newGroupName },
+          { where: { menuOptionGroupId: groupId }, transaction: t },
+        );
+
+        for (let orderMenuOption of orderMenuOptionGroup.OrderMenuOptions) {
+          const newOptionName = orderMenuOption.MenuOption.name;
+          const newOptionPrice = orderMenuOption.MenuOption.price;
+          const optionId = orderMenuOption.MenuOption.id;
+          console.log(newOptionPrice);
+          await OrderMenuOption.update(
+            { name: newOptionName, price: newOptionPrice },
+            {
+              where: {
+                menuOptionId: optionId,
+              },
+              transaction: t,
+            },
+          );
+        }
+      }
+    }
+
+    cart = await Order.findByPk(orderId, {
+      include: {
+        model: OrderMenu,
+        include: [
+          {
+            model: OrderMenuOptionGroup,
+            include: [
+              {
+                model: OrderMenuOption,
+              },
+            ],
+          },
+        ],
+      },
+      transaction: t,
+    });
+
+    res.json({ cart });
+
+    await t.commit();
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+
+exports.searchMenuInRestaurant = async (req, res, next) => {
+  try {
+    const { restaurantId } = req.params;
+    const restaurant = await Restaurant.findByPk(restaurantId, {
+      include: {
+        model: Menu,
+        where: {
+          status: 'ACTIVE',
+        },
+        required: false,
+        include: {
+          model: Menu,
+          where: {
+            status: 'ACTIVE',
+          },
+          required: false,
+          include: {},
+        },
+      },
+    });
   } catch (err) {
     next(err);
   }

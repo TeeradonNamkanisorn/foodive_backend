@@ -1,5 +1,8 @@
 module.exports = (sequelize, DataTypes) => {
-  const OrderMenuOption = sequelize.define('OrderMenuOption', {});
+  const OrderMenuOption = sequelize.define('OrderMenuOption', {
+    price: DataTypes.FLOAT,
+    name: DataTypes.STRING,
+  });
 
   OrderMenuOption.associate = ({ MenuOption, OrderMenuOptionGroup }) => {
     OrderMenuOption.belongsTo(OrderMenuOptionGroup, {
