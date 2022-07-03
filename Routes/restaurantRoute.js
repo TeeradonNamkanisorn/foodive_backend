@@ -5,6 +5,10 @@ const restaurantController = require('../controllers/restaurantController');
 const { uploadImage } = require('../middlewares/cloudinaryUploads');
 
 router.get('/getMe', restaurantController.getMe);
+router.get(
+  '/getAllCategory',
+  restaurantController.getAllCategoryFromRestaurantId,
+);
 
 router.patch(
   '/update',

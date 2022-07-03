@@ -28,6 +28,22 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
+exports.getAllCategoryFromRestaurantId = async (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const category = await Category.findAll({
+      where: {
+        restaurantId: id,
+      },
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({ category });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.updateRestaurant = async (req, res, next) => {
   try {
     // UPDATE : name , image
@@ -461,6 +477,10 @@ exports.addCategory = async (req, res, next) => {
     const { name } = req.body;
     const restaurantId = req.user.id;
 
+    if (!name || name.trim() === '') {
+      createError('Category name is required', 400);
+    }
+
     const category = await Category.create({ restaurantId, name });
 
     res.json({ category });
@@ -511,6 +531,8 @@ exports.deleteCategory = async (req, res, next) => {
         restaurantId,
       },
     });
+
+    console.log(otherCategory);
 
     await Menu.update(
       {
